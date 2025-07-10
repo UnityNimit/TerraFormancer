@@ -1,0 +1,18 @@
+# --- Environment & Secrets ---
+# Ignore the virtual environment folder
+venv/
+# Ignore the file with our secret API keys
+.env
+
+# --- Python Cache ---
+__pycache__/
+*.pyc
+
+# --- Generated Files ---
+# Ignore the directory where diagrams and other temp files are made
+backend/generated_files/
+
+# --- IDE/OS Specific ---
+.vscode/
+.idea/
+.DS_Store
