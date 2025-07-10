@@ -1,7 +1,6 @@
-# --- Environment & Secrets ---
-# Ignore the virtual environment folder
+# virtual environment folder
 venv/
-# Ignore the file with our secret API keys
+# ENV Folders for the api keys
 .env
 
 # --- Python Cache ---
@@ -9,7 +8,6 @@ __pycache__/
 *.pyc
 
 # --- Generated Files ---
-# Ignore the directory where diagrams and other temp files are made
 backend/generated_files/
 
 # --- IDE/OS Specific ---

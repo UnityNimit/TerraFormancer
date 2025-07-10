@@ -184,7 +184,6 @@
                     const isUser = msg.role === 'user';
                     const el = document.createElement('div');
                     el.className = `message-group ${isUser ? 'message-group-user' : 'message-group-bot'}`;
-                    // Sanitize content before inserting as HTML
                     const content = msg.content.replace(/</g, "<").replace(/>/g, ">").replace(/\n/g, '<br>');
                     el.innerHTML = `<div class="bubble ${isUser ? 'bubble-user' : 'bubble-bot'}"><p>${content}</p></div><div class="avatar ${isUser ? 'avatar-user' : 'avatar-bot'}">${isUser ? '🧑‍💻' : '🤖'}</div>`;
                     dom.chatContainer.appendChild(el);
@@ -201,7 +200,7 @@
         // --- API & UI HELPERS ---
         async function postToApi(endpoint, body) {
             toggleLoading(true);
-            appState.error_message = ''; // Clear previous errors
+            appState.error_message = ''; 
             try {
                 const response = await fetch(`${API_BASE_URL}${endpoint}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
                 const data = await response.json();
@@ -209,7 +208,6 @@
                 return data;
             } catch (err) {
                 console.error(`API Error:`, err);
-                // Update state directly to show the error
                 appState.error_message = `Network or server error: ${err.message}`;
                 render(); 
             } finally {
@@ -226,21 +224,15 @@
         async function handlePromptSubmission(message) {
             if (!message || dom.sendButton.disabled) return;
             
-            // Keep track of code state before the API call to detect changes
             const codeBefore = appState.iac_code;
             
-            // Send the request. Note: We are not updating the chat here anymore.
-            // The backend is now the single source of truth for the conversation history.
             const data = await postToApi('/api/chat', { session_id: appState.session_id, message: message });
             
             if (data) {
-                // The backend returns the *complete and final* state. We just need to sync it.
                 appState = data;
                 
-                // Check if new, different code was generated.
                 const wasCodeGenerated = appState.iac_code && appState.iac_code !== codeBefore;
                 
-                // Call the smarter render function
                 render(wasCodeGenerated);
             }
             dom.chatInput.value = '';

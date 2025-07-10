@@ -63,7 +63,6 @@ def intent_router_node(state: GraphState):
     response = llm.invoke(prompt)
     intent = response.content.strip()
     logging.info(f"User intent classified as: {intent}")
-    # This state change will be used by the conditional edge to route correctly
     return {"intent": intent}
 
 # --- NEW NODE: Conversational Agent ---
@@ -84,7 +83,6 @@ def conversational_agent_node(state: GraphState):
     Your Answer:
     """
     response = llm.invoke(prompt)
-    # The response is stored in a dedicated field so the backend can easily pick it up.
     return {"chat_response": response.content}
 
 
@@ -221,7 +219,7 @@ def execution_tool(state: GraphState):
     return {"apply_output": apply_process.stdout + "\n" + apply_process.stderr}
 
 
-# --- 3. GRAPH DEFINITION (Completely Redesigned with Intelligent Routing) ---
+# --- 3. GRAPH DEFINITION ---
 
 def route_by_intent(state: GraphState):
     """This function decides the first major branch of the graph."""
@@ -253,17 +251,14 @@ def create_graph() -> StateGraph:
     """
     workflow = StateGraph(GraphState)
     
-    # Add all nodes to the graph
     workflow.add_node("intent_router", intent_router_node)
     workflow.add_node("conversational_agent", conversational_agent_node)
     workflow.add_node("clarification_agent", clarification_agent)
     workflow.add_node("generate_code", iac_generation_agent)
     workflow.add_node("generate_diagram", visualization_tool)
 
-    # The graph starts by classifying the user's intent
     workflow.set_entry_point("intent_router")
     
-    # Based on the intent, the graph will branch
     workflow.add_conditional_edges(
         "intent_router",
         route_by_intent,
@@ -286,11 +281,9 @@ def create_graph() -> StateGraph:
         }
     )
     
-    # The final steps of the code generation path
     workflow.add_edge("generate_code", "generate_diagram")
     workflow.add_edge("generate_diagram", END)
     
     return workflow.compile()
 
-# Compile the final graph on startup
 app_graph = create_graph()
