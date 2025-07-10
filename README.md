@@ -1,4 +1,4 @@
-# 🛠️ TerraFormancer V2
+# 🛠️ TerraFormancer
 
 <p align="center">
   <img alt="Python Version" src="https://img.shields.io/badge/python-3.9+-blue.svg">
