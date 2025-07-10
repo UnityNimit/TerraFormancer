@@ -166,3 +166,35 @@ Contributions are what make the open-source community such an amazing place to l
 5.  Open a Pull Request
 
 ---
+```mermaid
+---
+config:
+  layout: dagre
+  theme: redux-dark
+  look: classic
+---
+flowchart TD
+ subgraph User_Environment["User's Environment"]
+        User(["User"])
+        Browser(["Web Browser"])
+  end
+ subgraph Application_Stack["Application Stack"]
+        Frontend(["Frontend UI"])
+        Backend(["Backend Server - FastAPI on localhost:8000"])
+  end
+ subgraph AI_Engine["Core AI Logic"]
+        LangGraph(["LangGraph Engine"])
+  end
+ subgraph External_Services["External Tools & Services"]
+        GenAI(["Google Generative AI API"])
+        TerraformCLI(["Terraform CLI - Subprocess"])
+        AWS(["AWS Cloud"])
+  end
+    User --> Browser
+    Frontend -- HTTP API --> Backend
+    Backend -- Orchestrates --> LangGraph
+    LangGraph -- API Call --> GenAI
+    Backend -- Subprocess Call --> TerraformCLI
+    TerraformCLI -- Infra Provisioning --> AWS
+    Browser --> Frontend
+  ```
