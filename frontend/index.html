@@ -11,55 +11,24 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/monokai-sublime.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     
-    <!-- LEGENDARY UI STYLES -->
+    <!-- UI Styles -->
     <style type="text/tailwindcss">
-        /* --- Base & Font --- */
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0B0F19; /* FIX: Set a solid, dark base color */
-            color: #E5E7EB;
-            overflow: hidden;
-        }
-
-        /* --- KEYFRAME ANIMATIONS --- */
+        body { font-family: 'Inter', sans-serif; background-color: #0B0F19; color: #E5E7EB; overflow: hidden; }
         @keyframes fade-slide-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
         @keyframes fade-in-scale-up { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         @keyframes aurora-bg { 0% { transform: translate(5vw, -10vh) rotate(0deg); } 50% { transform: translate(-10vw, 15vh) rotate(180deg); } 100% { transform: translate(5vw, -10vh) rotate(360deg); } }
-
-        /* --- LEGENDARY UI COMPONENTS --- */
+        @keyframes slide-fade-in-right { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+        
         @layer components {
-            /* FIX: The aurora is now a pseudo-element on the body itself */
-            .aurora-background::before {
-                content: '';
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                width: 150vmax;
-                height: 150vmax;
-                background-image: radial-gradient(circle at center, #1E40AF 0%, rgba(30, 64, 175, 0) 40%);
-                filter: blur(200px);
-                animation: aurora-bg 45s linear infinite;
-                z-index: 0; /* Let it sit behind all content */
-            }
-
-            /* --- NEW: Unified Placeholder Style --- */
-            .placeholder-container {
-                @apply w-full h-full flex items-center justify-center;
-            }
-            .placeholder-text {
-                @apply text-gray-500 font-medium;
-            }
-
-            /* Buttons */
-            .header-button { @apply bg-white/5 hover:bg-white/10 text-gray-300 font-medium py-2 px-4 rounded-lg transition-all duration-200 text-sm flex items-center gap-2 backdrop-blur-sm border border-white/10; }
-            .primary-button { @apply bg-teal-600 hover:bg-teal-500 text-white font-bold py-3 px-5 rounded-lg transition-all duration-200 flex items-center justify-center transform hover:scale-105 shadow-lg hover:shadow-teal-500/30; }
-
-            /* Panel Titles */
-            .panel-title { @apply text-lg font-semibold mb-2 text-gray-200; }
-
-            /* Advanced Chat Bubble Styles */
+            .aurora-background::before { content: ''; position: fixed; top: 50%; left: 50%; width: 150vmax; height: 150vmax; background-image: radial-gradient(circle at center, #1E40AF 0%, rgba(30, 64, 175, 0) 40%); filter: blur(200px); animation: aurora-bg 45s linear infinite; z-index: 0; }
+            .placeholder-container { @apply w-full h-full flex items-center justify-center text-center p-4; }
+            .placeholder-text { @apply text-gray-500 font-medium; }
+            .header-button { @apply bg-white/5 hover:bg-white/10 text-gray-300 font-medium py-2 px-4 rounded-lg transition-all duration-200 text-sm flex items-center gap-2 backdrop-blur-sm border border-white/10 transform hover:scale-105 active:scale-100; }
+            .primary-button { @apply bg-teal-600 hover:bg-teal-500 text-white font-bold py-3 px-5 rounded-lg transition-all duration-200 flex items-center justify-center transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-teal-500/30; }
+            .panel-title { @apply text-lg font-semibold mb-3 text-gray-200; }
             .message-group { @apply flex items-end gap-3 mb-4 max-w-xl; animation: fade-slide-in 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
             .avatar { @apply flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-lg border-2 border-white/10; }
             .bubble { @apply p-4 rounded-2xl relative shadow-lg text-white/90; }
@@ -69,35 +38,26 @@
             .message-group-user { @apply flex-row-reverse ml-auto; }
             .avatar-user { @apply avatar bg-blue-900; }
             .bubble-user { @apply bubble bg-gradient-to-br from-blue-600 to-teal-500 rounded-br-lg; }
-
-            /* Tab Button Styles */
-            .tab-button { @apply py-2 px-4 text-sm font-semibold text-gray-400 rounded-md hover:bg-white/10 hover:text-white transition-all duration-200 transform hover:scale-105; }
+            .tab-button { @apply py-2 px-4 text-sm font-semibold text-gray-400 rounded-md hover:bg-white/10 hover:text-white transition-all duration-200 transform hover:scale-105 active:scale-100; }
             .active-tab { @apply bg-teal-600 text-white shadow-lg shadow-teal-500/20; }
-            .tab-panel { @apply w-full h-full; animation: fade-in 0.5s ease; }
-
-            /* Example Prompt Styles */
+            .tab-panel { @apply w-full h-full; animation: slide-fade-in-right 0.4s ease; }
             .example-prompt-container { @apply flex flex-col items-center justify-center h-full text-center p-4; animation: fade-slide-in 0.5s ease-out forwards; }
             .example-prompt-title { @apply text-lg font-semibold text-gray-400 mb-4; }
             .example-prompt-grid { @apply grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-lg; }
-            .example-prompt-button { @apply bg-white/5 p-4 rounded-lg text-sm text-left hover:bg-white/10 cursor-pointer transition-all duration-200 border border-white/10 transform hover:scale-105; }
-            
-            /* Voice button listening style */
+            .example-prompt-button { @apply bg-white/5 p-4 rounded-lg text-sm text-left hover:bg-white/10 cursor-pointer transition-all duration-200 border border-white/10 transform hover:scale-[1.03] hover:shadow-md hover:shadow-teal-500/10; }
             .voice-button-listening { @apply bg-red-600 animate-pulse scale-110; }
+            .pre-wrap-logs { @apply whitespace-pre-wrap break-words; }
         }
-
-        /* Spinner & Scrollbars */
         .spinner { border: 3px solid rgba(255, 255, 255, 0.2); border-radius: 50%; border-top-color: #14B8A6; width: 24px; height: 24px; animation: spin 1s ease-in-out infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes pulse { 50% { opacity: .7; } }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background-color: #4A5568; border-radius: 20px; border: 2px solid #2D3748; }
+        ::-webkit-scrollbar-thumb { background-color: #4A5568; border-radius: 20px; border: 2px solid transparent; background-clip: content-box; }
         ::-webkit-scrollbar-thumb:hover { background-color: #718096; }
     </style>
 </head>
 <body class="aurora-background flex flex-col h-screen">
 
-    <!-- Header -->
     <header class="bg-black/20 backdrop-blur-sm border-b border-white/10 z-10 flex-shrink-0">
         <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
@@ -106,28 +66,29 @@
                     <span class="text-xl font-bold tracking-wider">TerraFormancer</span>
                 </div>
                 <div class="flex items-center gap-3">
-                    <button id="tutorial-button" class="header-button"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span>How to Use</span></button>
-                    <a href="https://github.com/UnityNimit/TerraFormancer" target="_blank" rel="noopener noreferrer" class="header-button">Support</a>
+                    <button id="tutorial-button" class="header-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span>How to Use</span>
+                    </button>
+                    <a href="https://github.com/UnityNimit/TerraFormancer" target="_blank" rel="noopener noreferrer" class="header-button">Support 🩷</a>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- FIX: flex-grow makes this section fill all available vertical space -->
     <main class="flex-grow flex flex-col lg:flex-row gap-8 p-8 overflow-hidden z-10">
-        
-        <!-- Left Column: Chat Interface -->
         <div class="flex flex-col w-full lg:w-1/2 h-full bg-black/20 backdrop-blur-lg rounded-xl shadow-2xl border border-white/10">
             <div id="chat-container" class="flex-grow p-4 overflow-y-auto"></div>
             <form id="chat-form" class="flex items-center gap-4 p-4 border-t border-white/10">
-                <input type="text" id="chat-input" class="flex-grow bg-white/5 border border-white/10 rounded-lg p-3 focus:ring-2 focus:ring-teal-500 focus:outline-none" placeholder="Describe your architecture...">
-                <button type="button" id="voice-button" class="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-white/5 hover:bg-white/10 rounded-full transition-all duration-200 border border-white/10 transform hover:scale-110" title="Speak Command"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-14 0m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v2a3 3 0 01-3 3z" /></svg></button>
+                <input type="text" id="chat-input" class="flex-grow bg-white/5 border border-white/10 rounded-lg p-3 focus:ring-2 focus:ring-teal-500 focus:outline-none transition-shadow duration-300 focus:shadow-md focus:shadow-teal-500/30" placeholder="Ask a question or describe your infrastructure...">
+                <button type="button" id="voice-button" class="flex-shrink-0 w-12 h-12 flex items-center justify-center bg-white/5 hover:bg-white/10 rounded-full transition-all duration-200 border border-white/10 transform hover:scale-110 active:scale-100" title="Speak Command">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-14 0m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v2a3 3 0 01-3 3z" /></svg>
+                </button>
                 <button type="submit" id="send-button" class="primary-button flex-shrink-0 px-6">Send</button>
                 <div id="loading-spinner" class="hidden spinner"></div>
             </form>
         </div>
 
-        <!-- Right Column: Outputs with Tabs -->
         <div class="flex flex-col w-full lg:w-1/2 h-full bg-black/20 backdrop-blur-lg rounded-xl shadow-2xl border border-white/10">
             <div class="p-2">
                 <div class="flex bg-black/20 rounded-md p-1 space-x-1 border border-white/5">
@@ -137,47 +98,85 @@
                 </div>
             </div>
             <div class="flex-grow p-6 pt-2 overflow-y-auto">
-                <div id="diagram-panel" class="tab-panel"><div id="diagram-placeholder" class="placeholder-container"><p class="placeholder-text">Diagram will appear here after code generation.</p></div><div id="diagram-container"></div></div>
-                <div id="code-panel" class="tab-panel hidden"><div id="code-placeholder" class="placeholder-container"><p class="placeholder-text">Terraform code will appear here.</p></div><pre class="h-full hidden"><code id="code-container" class="language-terraform bg-transparent p-0"></code></pre></div>
-                <div id="deploy-panel" class="tab-panel hidden"><div id="deploy-placeholder" class="placeholder-container"><p class="placeholder-text">Deployment controls will appear here.</p></div><div class="space-y-6 hidden" id="deploy-content"><section id="error-section" class="hidden"><h2 class="panel-title text-red-400">❌ Error</h2><div id="error-container" class="panel-content bg-red-900/30 p-4 rounded-lg"><pre><code class="text-red-300"></code></pre></div></section><section id="deployment-controls" class="hidden"><h2 class="panel-title">Deployment Controls</h2><div class="panel-content space-y-4"><button id="plan-button" class="w-full primary-button bg-blue-600 hover:bg-blue-500 hover:shadow-blue-500/30">1. Prepare for Deployment (Run Plan)</button></div></section><section id="plan-output-container" class="hidden"><h3 class="panel-title">📋 Deployment Plan</h3><pre><code id="plan-output" class="language-log w-full bg-gray-900 p-4 rounded-md text-sm"></code></pre><div class="mt-4 p-4 border-l-4 border-yellow-500 bg-yellow-900/30 text-yellow-300 rounded-r-lg"><p class="font-bold">⚠️ Review Carefully!</p><p class="text-sm">Ensure the plan contains only intended changes before applying.</p></div><button id="apply-button" class="mt-4 w-full primary-button bg-red-600 hover:bg-red-500 hover:shadow-red-500/30">2. Confirm & Apply to AWS</button></section><section id="apply-output-container" class="hidden"><h3 class="panel-title">📜 Deployment Result</h3><pre><code id="apply-output" class="language-log w-full bg-gray-900 p-4 rounded-md text-sm"></code></pre></section></div></div>
+                <div id="diagram-panel" class="tab-panel"><div id="diagram-placeholder" class="placeholder-container"><p class="placeholder-text">The architecture diagram will appear here.</p></div><div id="diagram-container"></div></div>
+                <div id="code-panel" class="tab-panel hidden"><div id="code-placeholder" class="placeholder-container"><p class="placeholder-text">The Terraform HCL code will appear here.</p></div><pre class="h-full hidden"><code id="code-container" class="language-terraform bg-transparent p-0"></code></pre></div>
+                <div id="deploy-panel" class="tab-panel hidden">
+                    <div id="deploy-placeholder" class="placeholder-container"><p class="placeholder-text">Generate code first to see deployment options.</p></div>
+                    <div class="space-y-8 hidden" id="deploy-content">
+                        <section id="error-section" class="hidden"><h2 class="panel-title text-red-400">❌ Error Occurred</h2><div class="panel-content bg-red-900/30 p-4 rounded-lg"><pre class="pre-wrap-logs"><code class="text-red-300"></code></pre></div></section>
+                        <section id="deployment-controls" class="hidden"><h2 class="panel-title">Deployment Controls</h2><div class="panel-content space-y-4"><button id="plan-button" class="w-full primary-button bg-blue-600 hover:bg-blue-500 hover:shadow-blue-500/30">1. Prepare for Deployment (Run Plan)</button></div></section>
+                        <section id="plan-output-container" class="hidden"><h3 class="panel-title">📋 Deployment Plan</h3><pre class="pre-wrap-logs w-full bg-gray-900 p-4 rounded-md text-sm"><code id="plan-output" class="language-log"></code></pre><div class="mt-4 p-4 border-l-4 border-yellow-500 bg-yellow-900/30 text-yellow-300 rounded-r-lg"><p class="font-bold">⚠️ Review Carefully!</p><p class="text-sm">Ensure the plan contains only intended changes before applying.</p></div><button id="apply-button" class="mt-4 w-full primary-button bg-red-600 hover:bg-red-500 hover:shadow-red-500/30">2. Confirm & Apply to AWS</button></section>
+                        <section id="apply-output-container" class="hidden"><h3 class="panel-title">📜 Deployment Result</h3><pre class="pre-wrap-logs w-full bg-gray-900 p-4 rounded-md text-sm"><code id="apply-output" class="language-log"></code></pre></section>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
 
-    <!-- Tutorial Modal -->
-    <div id="tutorial-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4"><div id="tutorial-panel" class="bg-gray-900/80 border border-white/10 rounded-xl shadow-2xl max-w-2xl w-full p-8 relative"><button id="close-tutorial-button" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">×</button><h2 class="text-2xl font-bold mb-6 text-center">How TerraFormancer Works</h2><div class="space-y-6 text-gray-300"><div class="flex items-start gap-4"><div class="text-3xl">1.</div><div><h3 class="font-semibold text-white">Describe Your Vision</h3><p class="text-sm">Use the chat to describe the cloud infrastructure you want to build. You can type or use your voice. Be as simple or as complex as you need. For example: "Create an S3 bucket and an EC2 instance."</p></div></div><div class="flex items-start gap-4"><div class="text-3xl">2.</div><div><h3 class="font-semibold text-white">Review the Output</h3><p class="text-sm">TerraFormancer will generate the Terraform code and an architecture diagram. Use the tabs on the right to switch between the 'Diagram' and 'Code' views to ensure everything looks correct.</p></div></div><div class="flex items-start gap-4"><div class="text-3xl">3.</div><div><h3 class="font-semibold text-white">Plan & Deploy</h3><p class="text-sm">Switch to the 'Deploy' tab. First, click 'Prepare for Deployment' to see the exact plan of changes. After carefully reviewing the plan, click 'Confirm & Apply' to build your infrastructure on AWS.</p></div></div></div></div></div>
+    <div id="tutorial-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-md z-50 items-center justify-center p-4">
+        <div id="tutorial-panel" class="bg-gray-900/80 border border-white/10 rounded-xl shadow-2xl max-w-2xl w-full p-8 relative transform transition-all duration-300">
+            <button id="close-tutorial-button" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors text-2xl font-bold">×</button>
+            <h2 class="text-2xl font-bold mb-6 text-center">How TerraFormancer Works</h2>
+            <div class="space-y-6 text-gray-300">
+                <div class="flex items-start gap-4">
+                    <div class="text-3xl">1.</div>
+                    <div>
+                        <h3 class="font-semibold text-white">Describe or Ask</h3>
+                        <p class="text-sm">Use the chat to describe infrastructure ("Create an S3 bucket") or ask a question ("What is an S3 bucket?"). The AI will understand your intent.</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="text-3xl">2.</div>
+                    <div>
+                        <h3 class="font-semibold text-white">Review the Output</h3>
+                        <p class="text-sm">If you asked for infrastructure, the AI will generate code and a diagram. If you asked a question, it will simply answer in the chat.</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="text-3xl">3.</div>
+                    <div>
+                        <h3 class="font-semibold text-white">Plan & Deploy</h3>
+                        <p class="text-sm">If code was generated, you can switch to the 'Deploy' tab to run a `plan` and then `apply` your changes to AWS.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <!-- Embedded main.js Logic -->
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // --- STATE & PROMPTS ---
+        // --- GLOBAL STATE & CONSTANTS ---
         let appState = { session_id: null, conversation_history: [], iac_code: "", iac_diagram_path: "", plan_output: "", apply_output: "", error_message: "" };
-        const examplePrompts = [ "Create a simple S3 bucket for private file storage.", "Design a VPC with two public and two private subnets.", "Provision a small EC2 instance running Amazon Linux 2.", "Set up a high-availability WordPress site with an RDS database." ];
+        const API_BASE_URL = 'http://127.0.0.1:8000';
+        const examplePrompts = [
+            "Create a simple S3 bucket for private file storage.",
+            "What is a VPC and why would I need one?",
+            "Provision a small EC2 instance running Amazon Linux 2.",
+            "Explain the difference between S3 and EBS."
+        ];
 
-        // --- DOM SELECTORS ---
+        // --- DOM ELEMENT CACHE ---
         const dom = {
-            chatForm: document.getElementById('chat-form'), chatInput: document.getElementById('chat-input'),
-            chatContainer: document.getElementById('chat-container'), loadingSpinner: document.getElementById('loading-spinner'),
-            sendButton: document.getElementById('send-button'), voiceButton: document.getElementById('voice-button'),
-            tabButtons: document.querySelectorAll('.tab-button'), tabPanels: document.querySelectorAll('.tab-panel'),
-            diagramContainer: document.getElementById('diagram-container'), diagramPlaceholder: document.getElementById('diagram-placeholder'),
-            codeContainer: document.getElementById('code-container').parentElement, codePlaceholder: document.getElementById('code-placeholder'),
-            deployContent: document.getElementById('deploy-content'), deployPlaceholder: document.getElementById('deploy-placeholder'),
-            deploymentControls: document.getElementById('deployment-controls'), planButton: document.getElementById('plan-button'),
-            applyButton: document.getElementById('apply-button'), planOutputContainer: document.getElementById('plan-output-container'),
-            planOutput: document.getElementById('plan-output'), applyOutputContainer: document.getElementById('apply-output-container'),
-            applyOutput: document.getElementById('apply-output'), errorSection: document.getElementById('error-section'),
-            errorContainer: document.getElementById('error-container').querySelector('code'),
-            tutorialButton: document.getElementById('tutorial-button'), tutorialModal: document.getElementById('tutorial-modal'),
-            closeTutorialButton: document.getElementById('close-tutorial-button'), tutorialPanel: document.getElementById('tutorial-panel'),
+            chatForm: document.getElementById('chat-form'), chatInput: document.getElementById('chat-input'), chatContainer: document.getElementById('chat-container'), loadingSpinner: document.getElementById('loading-spinner'), sendButton: document.getElementById('send-button'), voiceButton: document.getElementById('voice-button'), tabButtons: document.querySelectorAll('.tab-button'), tabPanels: document.querySelectorAll('.tab-panel'), diagramContainer: document.getElementById('diagram-container'), diagramPlaceholder: document.getElementById('diagram-placeholder'), codeContainer: document.getElementById('code-container').parentElement, codePlaceholder: document.getElementById('code-placeholder'), deployContent: document.getElementById('deploy-content'), deployPlaceholder: document.getElementById('deploy-placeholder'), deploymentControls: document.getElementById('deployment-controls'), planButton: document.getElementById('plan-button'), applyButton: document.getElementById('apply-button'), planOutputContainer: document.getElementById('plan-output-container'), planOutput: document.getElementById('plan-output'), applyOutputContainer: document.getElementById('apply-output-container'), applyOutput: document.getElementById('apply-output'), errorSection: document.getElementById('error-section'), errorContainer: document.getElementById('error-section').querySelector('code'), tutorialButton: document.getElementById('tutorial-button'), tutorialModal: document.getElementById('tutorial-modal'), closeTutorialButton: document.getElementById('close-tutorial-button'), tutorialPanel: document.getElementById('tutorial-panel'),
         };
 
         // --- RENDER FUNCTIONS ---
-        function render() { renderChat(); renderDiagram(); renderCode(); renderDeployment(); renderError(); setTimeout(() => hljs.highlightAll(), 50); }
+        function render(isNewCodeGenerated = false) {
+            renderChat(); // Always update the chat
+            if (isNewCodeGenerated) {
+                // Only update artifacts if new code was generated
+                renderDiagram();
+                renderCode();
+            }
+            // Deployment and error panels should always react to state changes
+            renderDeployment();
+            renderError();
+            setTimeout(() => { try { hljs.highlightAll(); } catch (e) { console.warn("Highlight.js error:", e); } }, 50);
+        }
         
         function renderChat() {
             dom.chatContainer.innerHTML = '';
-            if (appState.conversation_history.length === 0) {
+            if (!appState.conversation_history || appState.conversation_history.length === 0) {
                 dom.chatContainer.innerHTML = `<div class="example-prompt-container"><div class="avatar-bot avatar mb-4">🤖</div><h2 class="example-prompt-title">What should we build today?</h2><div class="example-prompt-grid">${examplePrompts.map(p => `<div class="example-prompt-button">${p}</div>`).join('')}</div></div>`;
                 document.querySelectorAll('.example-prompt-button').forEach(b => { b.addEventListener('click', () => handlePromptSubmission(b.textContent)); });
             } else {
@@ -185,6 +184,7 @@
                     const isUser = msg.role === 'user';
                     const el = document.createElement('div');
                     el.className = `message-group ${isUser ? 'message-group-user' : 'message-group-bot'}`;
+                    // Sanitize content before inserting as HTML
                     const content = msg.content.replace(/</g, "<").replace(/>/g, ">").replace(/\n/g, '<br>');
                     el.innerHTML = `<div class="bubble ${isUser ? 'bubble-user' : 'bubble-bot'}"><p>${content}</p></div><div class="avatar ${isUser ? 'avatar-user' : 'avatar-bot'}">${isUser ? '🧑‍💻' : '🤖'}</div>`;
                     dom.chatContainer.appendChild(el);
@@ -193,26 +193,69 @@
             dom.chatContainer.scrollTo({ top: dom.chatContainer.scrollHeight, behavior: 'smooth' });
         }
         
-        function renderDiagram() { const hasDiagram = !!appState.iac_diagram_path; dom.diagramContainer.innerHTML = hasDiagram ? `<img src="${API_BASE_URL}${appState.iac_diagram_path}?t=${new Date().getTime()}" alt="Architecture Diagram" class="max-w-full max-h-full object-contain">` : ``; dom.diagramPlaceholder.style.display = hasDiagram ? 'none' : 'flex'; dom.diagramContainer.style.display = hasDiagram ? 'block' : 'none'; }
+        function renderDiagram() { const hasDiagram = !!appState.iac_diagram_path; dom.diagramContainer.innerHTML = hasDiagram ? `<img src="${API_BASE_URL}${appState.iac_diagram_path}?t=${new Date().getTime()}" alt="Architecture Diagram" class="max-w-full max-h-full object-contain mx-auto" style="animation: fade-in-scale-up 0.5s ease;">` : ``; dom.diagramPlaceholder.style.display = hasDiagram ? 'none' : 'flex'; dom.diagramContainer.style.display = hasDiagram ? 'block' : 'none'; }
         function renderCode() { const hasCode = !!appState.iac_code; if (hasCode) dom.codeContainer.querySelector('code').textContent = appState.iac_code; dom.codePlaceholder.style.display = hasCode ? 'none' : 'flex'; dom.codeContainer.style.display = hasCode ? 'block' : 'none'; }
-        function renderDeployment() { const hasContent = !!appState.iac_code || !!appState.plan_output || !!appState.apply_output; dom.deployContent.classList.toggle('hidden', !hasContent); dom.deployPlaceholder.classList.toggle('hidden', hasContent); dom.deploymentControls.classList.toggle('hidden', !appState.iac_code); dom.planOutputContainer.classList.toggle('hidden', !appState.plan_output); dom.applyOutputContainer.classList.toggle('hidden', !appState.apply_output); if (appState.plan_output) dom.planOutput.textContent = appState.plan_output; if (appState.apply_output) dom.applyOutput.textContent = appState.apply_output; }
+        function renderDeployment() { const hasContent = !!appState.iac_code || !!appState.plan_output || !!appState.apply_output || !!appState.error_message; dom.deployContent.classList.toggle('hidden', !hasContent); dom.deployPlaceholder.classList.toggle('hidden', hasContent); dom.deploymentControls.classList.toggle('hidden', !appState.iac_code || !!appState.plan_output); dom.planOutputContainer.classList.toggle('hidden', !appState.plan_output); dom.applyOutputContainer.classList.toggle('hidden', !appState.apply_output); if (appState.plan_output) dom.planOutput.textContent = appState.plan_output; if (appState.apply_output) dom.applyOutput.textContent = appState.apply_output; }
         function renderError() { dom.errorSection.classList.toggle('hidden',!appState.error_message);if(appState.error_message){dom.errorContainer.textContent=appState.error_message;document.querySelector('[data-tab-target="#deploy-panel"]').click()}}
 
         // --- API & UI HELPERS ---
-        const API_BASE_URL = 'http://127.0.0.1:8000'; async function postToApi(e,b){toggleLoading(!0);try{const r=await fetch(`${API_BASE_URL}${e}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}),d=await r.json();if(!r.ok)throw new Error(d.detail||'API request failed');return d}catch(err){console.error(`Error:`,err);appState.error_message=`Network or server error: ${err.message}`;render()}finally{toggleLoading(!1)}}
+        async function postToApi(endpoint, body) {
+            toggleLoading(true);
+            appState.error_message = ''; // Clear previous errors
+            try {
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.detail || 'API request failed');
+                return data;
+            } catch (err) {
+                console.error(`API Error:`, err);
+                // Update state directly to show the error
+                appState.error_message = `Network or server error: ${err.message}`;
+                render(); 
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
         function setupTabs() { dom.tabButtons.forEach(b=>{b.addEventListener('click',()=>{dom.tabButtons.forEach(x=>x.classList.remove('active-tab'));dom.tabPanels.forEach(p=>p.classList.add('hidden'));b.classList.add('active-tab');document.querySelector(b.dataset.tabTarget).classList.remove('hidden')})});if(dom.tabButtons.length)dom.tabButtons[0].click() }
         function toggleLoading(isLoading) { dom.loadingSpinner.classList.toggle('hidden',!isLoading);dom.sendButton.disabled=isLoading;dom.sendButton.classList.toggle('opacity-50',isLoading);dom.sendButton.classList.toggle('cursor-not-allowed',isLoading) }
-        function setupTutorial() { const o=()=>{dom.tutorialModal.classList.remove('hidden');dom.tutorialModal.style.animation='fade-in 0.3s ease';dom.tutorialPanel.style.animation='fade-in-scale-up 0.3s ease'};const c=()=>{dom.tutorialModal.style.animation='fade-in 0.3s ease reverse';setTimeout(()=>dom.tutorialModal.classList.add('hidden'),300)};dom.tutorialButton.addEventListener('click',o);dom.closeTutorialButton.addEventListener('click',c);dom.tutorialModal.addEventListener('click',e=>{if(e.target===dom.tutorialModal)c()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!dom.tutorialModal.classList.contains('hidden'))c()})}
+        function setupTutorial() { const o=()=>{dom.tutorialModal.classList.add('flex');dom.tutorialModal.classList.remove('hidden');dom.tutorialModal.style.animation='fade-in 0.3s ease';dom.tutorialPanel.style.animation='fade-in-scale-up 0.3s ease'};const c=()=>{dom.tutorialPanel.style.animation='fade-in-scale-up 0.3s ease reverse';setTimeout(()=>{dom.tutorialModal.classList.add('hidden');dom.tutorialModal.classList.remove('flex')},300)};dom.tutorialButton.addEventListener('click',o);dom.closeTutorialButton.addEventListener('click',c);dom.tutorialModal.addEventListener('click',e=>{if(e.target===dom.tutorialModal)c()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!dom.tutorialModal.classList.contains('hidden'))c()})}
         function setupVoiceRecognition() { const SR=window.SpeechRecognition||window.webkitSpeechRecognition; if(!SR){dom.voiceButton.style.display='none';return} const r=new SR();r.continuous=false;r.lang='en-US';r.interimResults=false;r.maxAlternatives=1;let l=!1; dom.voiceButton.addEventListener('click',()=>{if(l){r.stop();return}r.start()}); r.onstart=()=>{l=!0;dom.voiceButton.classList.add('voice-button-listening')}; r.onend=()=>{l=!1;dom.voiceButton.classList.remove('voice-button-listening')}; r.onresult=(e)=>handlePromptSubmission(e.results[0][0].transcript); r.onerror=(e)=>{console.error(e.error);l=!1;dom.voiceButton.classList.remove('voice-button-listening')}; }
         
-        // --- EVENT HANDLERS ---
-        async function handlePromptSubmission(message) { if(!message||dom.sendButton.disabled)return;appState.error_message='';appState.conversation_history.push({role:'user',content:message});renderChat();dom.chatInput.value=''; const d=await postToApi('/api/chat',{session_id:appState.session_id,message:message}); if(d){Object.assign(appState,d);render()} }
-        dom.chatForm.addEventListener('submit',(e)=>{e.preventDefault();handlePromptSubmission(dom.chatInput.value.trim())});
-        dom.planButton.addEventListener('click',async()=>{const d=await postToApi('/api/plan',{session_id:appState.session_id});if(d)Object.assign(appState,d),render()});
-        dom.applyButton.addEventListener('click',async()=>{const d=await postToApi('/api/apply',{session_id:appState.session_id});if(d)Object.assign(appState,d),render()});
+        // --- CORE EVENT HANDLER ---
+        async function handlePromptSubmission(message) {
+            if (!message || dom.sendButton.disabled) return;
+            
+            // Keep track of code state before the API call to detect changes
+            const codeBefore = appState.iac_code;
+            
+            // Send the request. Note: We are not updating the chat here anymore.
+            // The backend is now the single source of truth for the conversation history.
+            const data = await postToApi('/api/chat', { session_id: appState.session_id, message: message });
+            
+            if (data) {
+                // The backend returns the *complete and final* state. We just need to sync it.
+                appState = data;
+                
+                // Check if new, different code was generated.
+                const wasCodeGenerated = appState.iac_code && appState.iac_code !== codeBefore;
+                
+                // Call the smarter render function
+                render(wasCodeGenerated);
+            }
+            dom.chatInput.value = '';
+        }
+
+        // --- Event Listeners Setup ---
+        dom.chatForm.addEventListener('submit', (e) => { e.preventDefault(); handlePromptSubmission(dom.chatInput.value.trim()); });
+        dom.planButton.addEventListener('click', async () => { const d = await postToApi('/api/plan', { session_id: appState.session_id }); if (d) { appState = d; render(true); } });
+        dom.applyButton.addEventListener('click', async () => { const d = await postToApi('/api/apply', { session_id: appState.session_id }); if (d) { appState = d; render(true); } });
         
         // --- INITIALIZATION ---
-        setupTabs(); setupTutorial(); setupVoiceRecognition(); renderChat();
+        setupTabs();
+        setupTutorial();
+        setupVoiceRecognition();
+        render(); // Initial render to show example prompts
     });
     </script>
 </body>

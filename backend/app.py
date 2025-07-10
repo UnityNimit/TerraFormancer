@@ -1,30 +1,30 @@
-#
-# backend/app.py - The Correct FastAPI Server Code
-#
 import os
 import uuid
 import tempfile
-from fastapi import FastAPI, HTTPException, Request
+import logging
 from fastapi.staticfiles import StaticFiles
+from fastapi import FastAPI, HTTPException, Request # <--- THIS LINE IS NOW CORRECT
+
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict
 
+# Import the new, re-architected graph and its state definition
 from agent_logic import app_graph, GraphState, deployment_planning_tool, execution_tool
 from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
 
 # --- FastAPI App Setup ---
 app = FastAPI()
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # --- CORS Configuration ---
-# Allows the frontend (running on a different port) to communicate with this backend
+# Allows the frontend (running on file:// or http://127.0.0.1) to communicate with this backend
 origins = [
     "http://localhost",
     "http://localhost:8000",
     "http://127.0.0.1",
     "http://127.0.0.1:8000",
-    # Add this line to allow opening the file directly in the browser
-    "null",
+    "null", # Allows opening index.html directly from the file system
 ]
 app.add_middleware(
     CORSMiddleware,
@@ -34,48 +34,44 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- State Management ---
-# In-memory dictionary to store session states.
-# For production, you'd replace this with Redis, a database, etc.
+# --- State Management & File Serving ---
+# In-memory dictionary for session states. For production, use Redis or a database.
 SESSIONS: Dict[str, GraphState] = {}
 
-# Create and mount the directory for serving generated files like diagrams
-# The directory is relative to where the script is run
+# This directory will hold temporary workspaces and generated diagrams
 os.makedirs("generated_files", exist_ok=True)
 app.mount("/generated_files", StaticFiles(directory="generated_files"), name="generated_files")
 
-# --- Pydantic Models for API Requests/Responses ---
-class ChatRequest(BaseModel):
+# --- Pydantic Models for API Requests ---
+class ApiRequest(BaseModel):
+    """Base model for requests that only need a session ID."""
     session_id: str | None = None
+
+class ChatRequest(ApiRequest):
+    """Model for chat requests, which also include a message."""
     message: str
 
-class PlanRequest(BaseModel):
-    session_id: str
-
-class ApplyRequest(BaseModel):
-    session_id: str
-
-# Helper to serialize BaseMessage objects for JSON responses
+# --- Helper Functions ---
 def serialize_history(history: List[BaseMessage]) -> List[Dict]:
-    serialized = []
-    for msg in history:
-        role = "user" if isinstance(msg, HumanMessage) else "assistant"
-        serialized.append({"role": role, "content": msg.content})
-    return serialized
+    """Converts LangChain message objects to a JSON-serializable format for the frontend."""
+    return [{"role": "user" if isinstance(msg, HumanMessage) else "assistant", "content": msg.content} for msg in history]
 
-# --- API Endpoints ---
-@app.post("/api/chat")
-async def chat(request: ChatRequest):
-    session_id = request.session_id or str(uuid.uuid4())
-
-    if session_id not in SESSIONS:
-        # Create a new session if it doesn't exist
-        # Make sure the temp dir is created inside the mounted directory
+def get_session_state(session_id: str | None) -> (str, GraphState):
+    """
+    Retrieves the state for a given session ID or creates a new one if it doesn't exist.
+    This encapsulates session creation logic.
+    """
+    sid = session_id or str(uuid.uuid4())
+    if sid not in SESSIONS:
+        logging.info(f"Creating new session: {sid}")
         temp_dir = tempfile.mkdtemp(dir="generated_files")
-        SESSIONS[session_id] = GraphState(
+        SESSIONS[sid] = GraphState(
             work_dir=temp_dir,
             initial_request="",
             conversation_history=[],
+            # Initialize all fields from the new GraphState
+            intent="",
+            chat_response="",
             iac_code="",
             iac_diagram_path="",
             plan_output="",
@@ -83,34 +79,62 @@ async def chat(request: ChatRequest):
             clarification_questions=[],
             error_message=""
         )
+    return sid, SESSIONS[sid]
 
-    # Get the current state for the session
-    current_state = SESSIONS[session_id]
+# --- API Endpoints ---
+@app.post("/api/chat")
+async def chat(request: ChatRequest):
+    """
+    The main chat endpoint. It now intelligently handles different agent outputs.
+    """
+    session_id, current_state = get_session_state(request.session_id)
     
-    # Append the user's message to the conversation history
+    # Keep a snapshot of the code before the agent runs to detect changes later
+    code_before_run = current_state.get("iac_code", "")
+    
+    # Append the new user message to the conversation history
     current_state["conversation_history"].append(HumanMessage(content=request.message))
-
-    # Invoke the graph
+    
     try:
-        # Make sure to pass the state correctly
+        # Invoke the re-architected graph with the intent router
         result_state = app_graph.invoke(current_state, config={"recursion_limit": 10})
     except Exception as e:
+        logging.error(f"Graph execution error for session {session_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Agent graph execution failed: {str(e)}")
 
-    # Update the session with the new state
-    SESSIONS[session_id].update(result_state)
+    # --- NEW: Intelligent Response Handling Logic ---
+    # This block determines the AI's response based on what the graph actually did.
+    response_text = ""
+    if result_state.get("chat_response"):
+        # Case 1: The conversational agent ran and gave a text response.
+        logging.info(f"Session {session_id}: Handling general chat response.")
+        response_text = result_state["chat_response"]
+        result_state["chat_response"] = "" # Clear the one-time response field
 
-    # Add the assistant's response to the history for the next turn
-    if result_state.get("error_message"):
+    elif result_state.get("clarification_questions"):
+        # Case 2: The agent needs more information from the user.
+        logging.info(f"Session {session_id}: Handling clarification questions.")
+        questions = result_state["clarification_questions"]
+        response_text = "I have a few questions to ensure I build this correctly:\n- " + "\n- ".join(questions)
+
+    elif result_state.get("error_message"):
+        # Case 3: An error occurred during the process.
+        logging.error(f"Session {session_id}: Handling error message.")
         response_text = result_state["error_message"]
-    elif result_state.get("iac_code"):
-         response_text = "I have updated the architecture based on your request. You can see the new code and diagram. What would you like to do next?"
-    else:
-        response_text = "I'm not sure how to proceed. Could you please clarify?"
-        
-    SESSIONS[session_id]["conversation_history"].append(AIMessage(content=response_text))
 
-    # Return the complete, updated state to the frontend
+    elif result_state.get("iac_code") and result_state["iac_code"] != code_before_run:
+        # Case 4: New code was generated successfully.
+        logging.info(f"Session {session_id}: Handling successful code generation.")
+        response_text = "I have updated the architecture based on your request. You can see the new code and diagram. What would you like to do next?"
+    
+    # Update the master session state with the results from the graph
+    SESSIONS[session_id].update(result_state)
+    
+    # If a response was determined, add it to the conversation history
+    if response_text:
+        SESSIONS[session_id]["conversation_history"].append(AIMessage(content=response_text))
+
+    # Prepare and return the full, updated state to the frontend
     response_data = SESSIONS[session_id].copy()
     response_data["session_id"] = session_id
     response_data["conversation_history"] = serialize_history(response_data["conversation_history"])
@@ -118,44 +142,55 @@ async def chat(request: ChatRequest):
     return response_data
 
 @app.post("/api/plan")
-async def plan(request: PlanRequest):
-    session_id = request.session_id
-    if session_id not in SESSIONS:
-        raise HTTPException(status_code=404, detail="Session not found")
-
-    current_state = SESSIONS[session_id]
+async def plan(request: ApiRequest):
+    """Endpoint to run `terraform plan`."""
+    session_id, current_state = get_session_state(request.session_id)
+    if not current_state.get("iac_code"):
+        raise HTTPException(status_code=400, detail="No IaC code available to plan.")
+    
     plan_result = deployment_planning_tool(current_state)
     current_state.update(plan_result)
-    current_state["apply_output"] = "" # Clear previous apply output
-    SESSIONS[session_id] = current_state
-
-    response_data = SESSIONS[session_id].copy()
+    current_state["apply_output"] = "" # Clear any previous apply output
+    
+    response_data = current_state.copy()
     response_data["session_id"] = session_id
     response_data["conversation_history"] = serialize_history(response_data["conversation_history"])
     return response_data
 
 @app.post("/api/apply")
-async def apply(request: ApplyRequest):
-    session_id = request.session_id
-    if session_id not in SESSIONS:
-        raise HTTPException(status_code=404, detail="Session not found")
-        
-    current_state = SESSIONS[session_id]
+async def apply(request: ApiRequest):
+    """Endpoint to run `terraform apply`."""
+    session_id, current_state = get_session_state(request.session_id)
+    if not current_state.get("plan_output"):
+         raise HTTPException(status_code=400, detail="A plan must be generated before applying.")
+
     apply_result = execution_tool(current_state)
     current_state.update(apply_result)
-    current_state["plan_output"] = "" # Clear plan output after apply
-    SESSIONS[session_id] = current_state
-
-    response_data = SESSIONS[session_id].copy()
+    current_state["plan_output"] = "" # Clear the plan output after applying
+    
+    response_data = current_state.copy()
     response_data["session_id"] = session_id
     response_data["conversation_history"] = serialize_history(response_data["conversation_history"])
     return response_data
 
 # --- Serve Frontend ---
-# This serves the static files from the 'frontend' directory, which is one level up.
+# This serves the static files from the 'frontend' directory, assuming it's one level up.
+# This setup is ideal for a development environment.
 app.mount("/", StaticFiles(directory="../frontend", html=True), name="static")
 
 @app.get("/{full_path:path}")
-async def catch_all(request: Request, full_path: str):
-    # This catch-all is to ensure that refreshing a page doesn't 404
-    return app.send_static_file("index.html")
+async def catch_all_for_spa(request: Request, full_path: str):
+    """
+    Catch-all route to serve index.html for Single Page Applications (SPAs).
+    This ensures that refreshing the page doesn't result in a 404 error.
+    """
+    # This line is a safety check to avoid serving the API docs as the index.html
+    if full_path.startswith("docs") or full_path.startswith("redoc"):
+        raise HTTPException(status_code=404, detail="Not found")
+    
+    index_path = os.path.join("../frontend", "index.html")
+    if os.path.exists(index_path):
+        from fastapi.responses import FileResponse
+        return FileResponse(index_path)
+    
+    raise HTTPException(status_code=404, detail="index.html not found")
