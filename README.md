@@ -154,26 +154,26 @@ Here's a look at how the different parts of TerraFormancer interact.
       <pre><code class="language-mermaid">
 ---
 config:
-  theme: dark
+  theme: redux-dark
+  look: classic
 ---
 flowchart TD
  subgraph User_Environment["User's Environment"]
-    User(["<br>👤<br>User"])
-    Browser(["<br>🌐<br>Web Browser"])
+    User(["👤 User"])
+    Browser(["🌐 Web Browser"])
   end
  subgraph App_Stack["Application Stack"]
-    Frontend(["<br>🎨<br>Frontend UI"])
-    Backend(["<br>⚙️<br>Backend Server"])
+    Frontend(["🎨 Frontend UI"])
+    Backend(["⚙️ Backend Server"])
   end
  subgraph AI_Engine["AI Engine"]
-    LangGraph(["<br>🧠<br>LangGraph"])
+    LangGraph(["🧠 LangGraph"])
   end
  subgraph External["External Tools & Services"]
     GenAI(["Google AI API"])
     TerraformCLI(["Terraform CLI"])
     AWS(["AWS Cloud"])
   end
-
     User --> Browser
     Browser --> Frontend
     Frontend -- HTTP API --> Backend
@@ -181,12 +181,7 @@ flowchart TD
     LangGraph -- API Call --> GenAI
     Backend -- Subprocess --> TerraformCLI
     TerraformCLI -- Provisions --> AWS
-      </code></pre>
-    </td>
-    <td>
-      <strong>User Chat & Artifact Generation Flow</strong>
-      <br><br>
-      <pre><code class="language-mermaid">
+
 ---
 config:
   theme: dark
