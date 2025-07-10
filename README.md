@@ -152,6 +152,7 @@ Here's a look at how the different parts of TerraFormancer interact.
       <strong>High-Level System Architecture</strong>
       <br><br>
       <pre><code class="language-mermaid">
+```mermaid
 ---
 config:
   theme: redux-dark
@@ -181,6 +182,7 @@ flowchart TD
     LangGraph -- API Call --> GenAI
     Backend -- Subprocess --> TerraformCLI
     TerraformCLI -- Provisions --> AWS
+```
 
 ---
 config:
