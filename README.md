@@ -16,9 +16,10 @@ TerraFormancer is a complete re-architecture of the original concept, built as a
 <br>
 
 <p align="center">
-  <a href="https://github.com/UnityNimit/TerraFormancer">
-    <img src="https://raw.githubusercontent.com/UnityNimit/TerraFormancer/main/demo.gif?raw=true" alt="TerraFormancer Demo GIF" width="85%">
-  </a>
+  <video width="85%" autoplay loop muted>
+    <source src="https://raw.githubusercontent.com/UnityNimit/TerraFormancer/main/demo.mp4?raw=true" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
 </p>
 
 ## ✨ Core Features
