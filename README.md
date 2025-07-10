@@ -148,110 +148,116 @@ Here's a look at how the different parts of TerraFormancer interact.
 
 <table>
   <tr>
-    <td>
+    <td width="50%">
       <strong>High-Level System Architecture</strong>
       <br><br>
-      <pre><code class="language-mermaid">
-```mermaid
----
-config:
-  theme: redux-dark
-  look: classic
----
-flowchart TD
- subgraph User_Environment["User's Environment"]
-    User(["👤 User"])
-    Browser(["🌐 Web Browser"])
-  end
- subgraph App_Stack["Application Stack"]
-    Frontend(["🎨 Frontend UI"])
-    Backend(["⚙️ Backend Server"])
-  end
- subgraph AI_Engine["AI Engine"]
-    LangGraph(["🧠 LangGraph"])
-  end
- subgraph External["External Tools & Services"]
-    GenAI(["Google AI API"])
-    TerraformCLI(["Terraform CLI"])
-    AWS(["AWS Cloud"])
-  end
-    User --> Browser
-    Browser --> Frontend
-    Frontend -- HTTP API --> Backend
-    Backend -- Orchestrates --> LangGraph
-    LangGraph -- API Call --> GenAI
-    Backend -- Subprocess --> TerraformCLI
-    TerraformCLI -- Provisions --> AWS
-```
+      
+      ```mermaid
+      ---
+      config:
+        theme: dark
+      ---
+      flowchart TD
+        subgraph User_Environment["User's Environment"]
+          User(["👤 User"])
+          Browser(["🌐 Web Browser"])
+        end
+        subgraph App_Stack["Application Stack"]
+          Frontend(["🎨 Frontend UI"])
+          Backend(["⚙️ Backend Server"])
+        end
+        subgraph AI_Engine["AI Engine"]
+          LangGraph(["🧠 LangGraph"])
+        end
+        subgraph External["External Tools & Services"]
+          GenAI(["Google AI API"])
+          TerraformCLI(["Terraform CLI"])
+          AWS(["AWS Cloud"])
+        end
+        User --> Browser
+        Browser --> Frontend
+        Frontend -- HTTP API --> Backend
+        Backend -- Orchestrates --> LangGraph
+        LangGraph -- API Call --> GenAI
+        Backend -- Subprocess --> TerraformCLI
+        TerraformCLI -- Provisions --> AWS
+      ```
+    </td>
+    <td width="50%">
+      <strong>User Chat & Artifact Generation Flow</strong>
+      <br><br>
+      
+      ```mermaid
+      ---
+      config:
+        theme: dark
+      ---
+      sequenceDiagram
+        participant User
+        participant Frontend
+        participant Backend
+        participant Agent (LangGraph)
+        participant GoogleAI
 
----
-config:
-  theme: dark
----
-sequenceDiagram
-    participant User
-    participant Frontend
-    participant Backend
-    participant Agent (LangGraph)
-    participant GoogleAI
-
-    User->>Frontend: Types prompt & sends
-    Frontend->>Backend: POST /api/chat
-    Backend->>Agent: Invoke with prompt
-    Agent->>GoogleAI: Generate HCL
-    GoogleAI-->>Agent: Return HCL code
-    Agent->>Backend: Run diagram script
-    Backend-->>Agent: Return diagram path
-    Agent-->>Backend: Final state (HCL, path)
-    Backend-->>Frontend: 200 OK (JSON response)
-    Frontend->>User: Update UI with code & diagram
-      </code></pre>
+        User->>Frontend: Types prompt & sends
+        Frontend->>Backend: POST /api/chat
+        Backend->>Agent: Invoke with prompt
+        Agent->>GoogleAI: Generate HCL
+        GoogleAI-->>Agent: Return HCL code
+        Agent->>Backend: Run diagram script
+        Backend-->>Agent: Return diagram path
+        Agent-->>Backend: Final state (HCL, path)
+        Backend-->>Frontend: 200 OK (JSON response)
+        Frontend->>User: Update UI with code & diagram
+      ```
     </td>
   </tr>
   <tr>
-    <td>
+    <td width="50%">
       <strong>Two-Phase Deployment Workflow</strong>
       <br><br>
-      <pre><code class="language-mermaid">
----
-config:
-  theme: dark
----
-flowchart TD
-    A[Code in UI] --> B{Click 'Prepare'}
-    B --> C[POST /api/plan]
-    C --> D[Backend runs `terraform plan`]
-    D --> E[Plan output sent to UI]
-    E --> F{Approve Plan?}
-    F -- No --> G[Stop]
-    F -- Yes --> H{Click 'Apply'}
-    H --> I[POST /api/apply]
-    I --> J[Backend runs `terraform apply`]
-    J --> K[Infra provisioned on AWS]
-    K --> L[Logs sent to UI]
-    L --> M[Display success]
-      </code></pre>
+
+      ```mermaid
+      ---
+      config:
+        theme: dark
+      ---
+      flowchart TD
+        A[Code in UI] --> B{Click 'Prepare'}
+        B --> C[POST /api/plan]
+        C --> D[Backend runs `terraform plan`]
+        D --> E[Plan output sent to UI]
+        E --> F{Approve Plan?}
+        F -- No --> G[Stop]
+        F -- Yes --> H{Click 'Apply'}
+        H --> I[POST /api/apply]
+        I --> J[Backend runs `terraform apply`]
+        J --> K[Infra provisioned on AWS]
+        K --> L[Logs sent to UI]
+        L --> M[Display success]
+      ```
     </td>
-    <td>
+    <td width="50%">
       <strong>Tutorial Modal User Flow</strong>
       <br><br>
-      <pre><code class="language-mermaid">
----
-config:
-  theme: dark
----
-graph TD
-    A["User on main page"]
-    A --> B["Clicks 'How to Use'"]
-    B --> C["Tutorial Modal Appears"]
-    subgraph "Modal Interaction"
-      C --> D1["Clicks 'X' button"]
-      C --> D2["Presses 'Escape' key"]
-    end
-    D1 --> E["Modal Hides"]
-    D2 --> E
-    E --> F["Returns to main page"]
-      </code></pre>
+
+      ```mermaid
+      ---
+      config:
+        theme: dark
+      ---
+      graph TD
+        A["User on main page"]
+        A --> B["Clicks 'How to Use'"]
+        B --> C["Tutorial Modal Appears"]
+        subgraph "Modal Interaction"
+          C --> D1["Clicks 'X' button"]
+          C --> D2["Presses 'Escape' key"]
+        end
+        D1 --> E["Modal Hides"]
+        D2 --> E
+        E --> F["Returns to main page"]
+      ```
     </td>
   </tr>
 </table>
