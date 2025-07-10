@@ -11,21 +11,17 @@ from langgraph.graph import StateGraph, END
 from langchain_core.messages import BaseMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-# --- Setup & Configuration ---
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# --- 1. AGENT STATE (Expanded for Conversational AI) ---
 class GraphState(TypedDict):
     work_dir: str
     initial_request: str
     conversation_history: List[BaseMessage]
     
-    # --- NEW FIELDS FOR INTELLIGENT ROUTING ---
-    intent: str               # Holds the classified intent ('CODE_MODIFICATION' or 'GENERAL_CHAT')
-    chat_response: str        # Holds the text-only response from the conversational agent
+    intent: str               
+    chat_response: str        
     
-    # --- EXISTING FIELDS FOR CODE GENERATION ---
     iac_code: str
     iac_diagram_path: str
     plan_output: str
@@ -33,14 +29,12 @@ class GraphState(TypedDict):
     clarification_questions: List[str]
     error_message: str
 
-# --- 2. LLM & AGENT NODES ---
 try:
     llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.1)
 except Exception as e:
     logging.error(f"FATAL: Error initializing LLM. Please check your GOOGLE_API_KEY. Details: {e}")
     raise
 
-# --- NEW NODE: Master Intent Router ---
 def intent_router_node(state: GraphState):
     """
     Classifies the user's intent to decide which path the graph should take.
@@ -65,7 +59,6 @@ def intent_router_node(state: GraphState):
     logging.info(f"User intent classified as: {intent}")
     return {"intent": intent}
 
-# --- NEW NODE: Conversational Agent ---
 def conversational_agent_node(state: GraphState):
     """
     Handles general questions and conversation. Does not generate code.
@@ -86,13 +79,11 @@ def conversational_agent_node(state: GraphState):
     return {"chat_response": response.content}
 
 
-# --- EXISTING FUNCTION: Kept as requested, but no longer used as a graph node ---
 def architectural_goal_node(state: GraphState):
     """(This function is kept for reference but is no longer part of the main graph flow)"""
     return {"initial_request": state["conversation_history"][-1].content, "clarification_questions": []}
 
 
-# --- EXISTING NODES (Unchanged, part of the CODE_MODIFICATION pipeline) ---
 
 def iac_generation_agent(state: GraphState):
     logging.info("Executing iac_generation_agent: Architecting infrastructure...")
@@ -219,7 +210,6 @@ def execution_tool(state: GraphState):
     return {"apply_output": apply_process.stdout + "\n" + apply_process.stderr}
 
 
-# --- 3. GRAPH DEFINITION ---
 
 def route_by_intent(state: GraphState):
     """This function decides the first major branch of the graph."""
@@ -263,21 +253,19 @@ def create_graph() -> StateGraph:
         "intent_router",
         route_by_intent,
         {
-            "clarification_agent": "clarification_agent",    # Path for code requests
-            "conversational_agent": "conversational_agent" # Path for general chat
+            "clarification_agent": "clarification_agent",    
+            "conversational_agent": "conversational_agent" 
         }
     )
     
-    # The conversational path is simple: it responds and then ends the process.
     workflow.add_edge("conversational_agent", END)
     
-    # The code modification path has its own internal routing
     workflow.add_conditional_edges(
         "clarification_agent",
         route_after_clarification,
         {
-            "generate_code": "generate_code", # If no questions, proceed
-            END: END                          # If questions exist, stop
+            "generate_code": "generate_code", 
+            END: END                          
         }
     )
     
