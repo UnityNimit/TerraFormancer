@@ -2,7 +2,6 @@
 
 <p align="center">
   <img alt="Python Version" src="https://img.shields.io/badge/python-3.9+-blue.svg">
-  <img alt="License" src="https://img.shields.io/badge/license-MIT-green.svg">
   <img alt="PRs Welcome" src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg">
 </p>
 
@@ -146,121 +145,111 @@ TerraFormancer/
 
 Here's a look at how the different parts of TerraFormancer interact.
 
-<table>
-  <tr>
-    <td width="50%">
-      <strong>High-Level System Architecture</strong>
-      <br><br>
-      
-      ```mermaid
-      ---
-      config:
-        theme: dark
-      ---
-      flowchart TD
-        subgraph User_Environment["User's Environment"]
-          User(["👤 User"])
-          Browser(["🌐 Web Browser"])
-        end
-        subgraph App_Stack["Application Stack"]
-          Frontend(["🎨 Frontend UI"])
-          Backend(["⚙️ Backend Server"])
-        end
-        subgraph AI_Engine["AI Engine"]
-          LangGraph(["🧠 LangGraph"])
-        end
-        subgraph External["External Tools & Services"]
-          GenAI(["Google AI API"])
-          TerraformCLI(["Terraform CLI"])
-          AWS(["AWS Cloud"])
-        end
-        User --> Browser
-        Browser --> Frontend
-        Frontend -- HTTP API --> Backend
-        Backend -- Orchestrates --> LangGraph
-        LangGraph -- API Call --> GenAI
-        Backend -- Subprocess --> TerraformCLI
-        TerraformCLI -- Provisions --> AWS
-      ```
-    </td>
-    <td width="50%">
-      <strong>User Chat & Artifact Generation Flow</strong>
-      <br><br>
-      
-      ```mermaid
-      ---
-      config:
-        theme: dark
-      ---
-      sequenceDiagram
-        participant User
-        participant Frontend
-        participant Backend
-        participant Agent (LangGraph)
-        participant GoogleAI
+🌐 High-Level System Architecture
+This diagram shows the overall structure, connecting the user, the application stack, the AI engine, and external services.
+```mermaid
+---
+config:
+  theme: redux-dark
+  look: classic
+---
+flowchart TD
+ subgraph User_Environment["User's Environment"]
+    User(["👤 User"])
+    Browser(["🌐 Web Browser"])
+  end
+ subgraph App_Stack["Application Stack"]
+    Frontend(["🎨 Frontend UI"])
+    Backend(["⚙️ Backend Server"])
+  end
+ subgraph AI_Engine["AI Engine"]
+    LangGraph(["🧠 LangGraph"])
+  end
+ subgraph External["External Tools & Services"]
+    GenAI(["Google AI API"])
+    TerraformCLI(["Terraform CLI"])
+    AWS(["AWS Cloud"])
+  end
+    User --> Browser
+    Browser --> Frontend
+    Frontend -- HTTP API --> Backend
+    Backend -- Orchestrates --> LangGraph
+    LangGraph -- API Call --> GenAI
+    Backend -- Subprocess --> TerraformCLI
+    TerraformCLI -- Provisions --> AWS
+```
 
-        User->>Frontend: Types prompt & sends
-        Frontend->>Backend: POST /api/chat
-        Backend->>Agent: Invoke with prompt
-        Agent->>GoogleAI: Generate HCL
-        GoogleAI-->>Agent: Return HCL code
-        Agent->>Backend: Run diagram script
-        Backend-->>Agent: Return diagram path
-        Agent-->>Backend: Final state (HCL, path)
-        Backend-->>Frontend: 200 OK (JSON response)
-        Frontend->>User: Update UI with code & diagram
-      ```
-    </td>
-  </tr>
-  <tr>
-    <td width="50%">
-      <strong>Two-Phase Deployment Workflow</strong>
-      <br><br>
+💬 User Chat & Artifact Generation Flow
+This sequence diagram illustrates the step-by-step process from a user sending a message to receiving the generated code and diagram.
+```mermaid
+---
+config:
+  theme: redux-dark
+  look: classic
+---
+sequenceDiagram
+  participant User
+  participant Frontend
+  participant Backend
+  participant Agent (LangGraph)
+  participant GoogleAI
 
-      ```mermaid
-      ---
-      config:
-        theme: dark
-      ---
-      flowchart TD
-        A[Code in UI] --> B{Click 'Prepare'}
-        B --> C[POST /api/plan]
-        C --> D[Backend runs `terraform plan`]
-        D --> E[Plan output sent to UI]
-        E --> F{Approve Plan?}
-        F -- No --> G[Stop]
-        F -- Yes --> H{Click 'Apply'}
-        H --> I[POST /api/apply]
-        I --> J[Backend runs `terraform apply`]
-        J --> K[Infra provisioned on AWS]
-        K --> L[Logs sent to UI]
-        L --> M[Display success]
-      ```
-    </td>
-    <td width="50%">
-      <strong>Tutorial Modal User Flow</strong>
-      <br><br>
+  User->>Frontend: Types prompt & sends
+  Frontend->>Backend: POST /api/chat
+  Backend->>Agent: Invoke with prompt
+  Agent->>GoogleAI: Generate HCL
+  GoogleAI-->>Agent: Return HCL code
+  Agent->>Backend: Run diagram script
+  Backend-->>Agent: Return diagram path
+  Agent-->>Backend: Final state (HCL, path)
+  Backend-->>Frontend: 200 OK (JSON response)
+  Frontend->>User: Update UI with code & diagram
+```
 
-      ```mermaid
-      ---
-      config:
-        theme: dark
-      ---
-      graph TD
-        A["User on main page"]
-        A --> B["Clicks 'How to Use'"]
-        B --> C["Tutorial Modal Appears"]
-        subgraph "Modal Interaction"
-          C --> D1["Clicks 'X' button"]
-          C --> D2["Presses 'Escape' key"]
-        end
-        D1 --> E["Modal Hides"]
-        D2 --> E
-        E --> F["Returns to main page"]
-      ```
-    </td>
-  </tr>
-</table>
+🚀 Two-Phase Deployment Workflow (Plan & Apply)
+This flowchart details the safe deployment process, requiring the user to review a terraform plan before applying any changes.
+```mermaid
+---
+config:
+  theme: redux-dark
+  look: classic
+---
+flowchart TD
+  A[Code in UI] --> B{Click 'Prepare'}
+  B --> C[POST /api/plan]
+  C --> D[Backend runs `terraform plan`]
+  D --> E[Plan output sent to UI]
+  E --> F{Approve Plan?}
+  F -- No --> G[Stop]
+  F -- Yes --> H{Click 'Apply'}
+  H --> I[POST /api/apply]
+  I --> J[Backend runs `terraform apply`]
+  J --> K[Infra provisioned on AWS]
+  K --> L[Logs sent to UI]
+  L --> M[Display success]
+```
+
+💡 Tutorial Modal User Flow
+A simple flow showing how the "How to Use" modal is triggered and dismissed by the user.
+```mermaid
+---
+config:
+  theme: redux-dark
+  look: classic
+---
+graph TD
+  A["User on main page"]
+  A --> B["Clicks 'How to Use'"]
+  B --> C["Tutorial Modal Appears"]
+  subgraph "Modal Interaction"
+    C --> D1["Clicks 'X' button"]
+    C --> D2["Presses 'Escape' key"]
+  end
+  D1 --> E["Modal Hides"]
+  D2 --> E
+  E --> F["Returns to main page"]
+```
+
 
 ## 🤝 Contributing
 
