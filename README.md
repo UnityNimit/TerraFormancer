@@ -178,7 +178,7 @@ flowchart TD
     Backend -- Subprocess --> TerraformCLI
     TerraformCLI -- Provisions --> AWS
 ```
----
+
 ## 💬 User Chat & Artifact Generation Flow
 This sequence diagram illustrates the step-by-step process from a user sending a message to receiving the generated code and diagram.
 ```mermaid
@@ -205,7 +205,7 @@ sequenceDiagram
   Backend-->>Frontend: 200 OK (JSON response)
   Frontend->>User: Update UI with code & diagram
 ```
----
+
 ## 🚀 Two-Phase Deployment Workflow (Plan & Apply)
 This flowchart details the safe deployment process, requiring the user to review a terraform plan before applying any changes.
 ```mermaid
@@ -228,7 +228,7 @@ flowchart TD
   K --> L[Logs sent to UI]
   L --> M[Display success]
 ```
----
+
 ## 💡 Tutorial Modal User Flow
 A simple flow showing how the "How to Use" modal is triggered and dismissed by the user.
 ```mermaid
@@ -250,7 +250,7 @@ graph TD
   E --> F["Returns to main page"]
 ```
 
----
+
 ## 🤝 Contributing
 
 Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
