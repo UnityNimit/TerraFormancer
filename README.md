@@ -166,6 +166,8 @@ Contributions are what make the open-source community such an amazing place to l
 5.  Open a Pull Request
 
 ---
+
+High-Level System Architecture
 ```mermaid
 ---
 config:
@@ -198,3 +200,85 @@ flowchart TD
     TerraformCLI -- Infra Provisioning --> AWS
     Browser --> Frontend
   ```
+
+  User Chat & Artifact Generation Flow
+  ```mermaid
+  ---
+config:
+  layout: dagre
+  theme: redux-dark
+  look: classic
+---
+sequenceDiagram
+    participant User
+    participant Frontend as Frontend (JavaScript)
+    participant Backend as Backend (FastAPI Server)
+    participant Agent as AI Agent (LangGraph)
+    participant GoogleAI as Google AI API
+    participant Diagram as Diagram Script (diagram_generator.py)
+
+    User->>Frontend: Types message and clicks "Send"
+    Frontend->>Backend: POST /api/chat (user message)
+    Backend->>Agent: Activate AI Agent with message
+    Agent->>GoogleAI: Generate Terraform HCL from prompt
+    GoogleAI-->>Agent: Return HCL code
+    Agent->>Diagram: Run diagram_generator.py as subprocess
+    Diagram-->>Agent: Return diagram image path
+    Agent-->>Backend: Return final state (HCL + image path)
+    Backend-->>Frontend: 200 OK with JSON (HCL + diagram path)
+    Frontend->>User: Update UI with code + diagram
+```
+
+The Two-Phase Deployment Workflow (Plan & Apply)
+```mermaid
+---
+config:
+  layout: dagre
+  theme: redux-dark
+  look: classic
+---
+flowchart TD
+
+A[Terraform code exists in UI] --> B[User clicks Prepare for Deployment]
+B --> C[Frontend sends POST api/plan]
+C --> D[Backend executes terraform plan via CLI]
+D --> E[Plan output returned to Frontend]
+E --> F[Frontend displays Plan output to User]
+
+F --> G{Review Plan and Approve?}
+G -->|No| H[Stop: No changes applied]
+G -->|Yes| I[User clicks Confirm and Apply]
+I --> J[Frontend sends POST api/apply]
+J --> K[Backend executes terraform apply -auto-approve]
+K --> L[Resources provisioned on AWS via Terraform CLI]
+L --> M[Final log output returned to Frontend]
+M --> N[Frontend displays deployment logs to User]
+```
+
+
+The Tutorial Modal User Flow
+```mermaid
+---
+config:
+  layout: dagre
+  theme: redux-dark
+  look: classic
+---
+graph TD
+    A["User views main application interface"]
+    B["User clicks 'How to Use' in header"]
+    C["JavaScript displays Tutorial Modal"]
+    D1["User clicks 'X' (close button)"]
+    D2["User presses 'Escape' key"]
+    E["JavaScript hides Tutorial Modal"]
+    F["User returns to main application interface"]
+
+    A --> B
+    B --> C
+    C --> D1
+    C --> D2
+    D1 --> E
+    D2 --> E
+    E --> F
+
+```
