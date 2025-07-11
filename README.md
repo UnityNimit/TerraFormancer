@@ -36,7 +36,7 @@ TerraFormancer is a complete re-architecture of the original concept, built as a
 | --------------- | ---------------------- | -------------------------- |
 | **Backend**     | **Python**             | Core Language              |
 |                 | FastAPI                | Web Server & API           |
-|                 | LangGraph              | AI Agent & State Machine   |
+|                 | LangGraph and Langchain| AI Agent & State Machine   |
 |                 | Google Generative AI   | LLM for Code Generation    |
 |                 | Diagrams               | Architecture Visualization |
 | **Frontend**    | **HTML5**              | Structure                  |
