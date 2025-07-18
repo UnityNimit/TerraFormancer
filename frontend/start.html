@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - TerraFormancer</title>
+    <!-- Scripts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- UI Styles -->
+    <style type="text/tailwindcss">
+        body { font-family: 'Inter', sans-serif; background-color: #0B0F19; color: #E5E7EB; overflow: hidden; /* Prevent body from scrolling */ }
+        @keyframes fade-slide-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes aurora-bg { 0% { transform: translate(5vw, -10vh) rotate(0deg); } 50% { transform: translate(-10vw, 15vh) rotate(180deg); } 100% { transform: translate(5vw, -10vh) rotate(360deg); } }
+        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fade-in-scale-up { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        @layer components {
+            .aurora-background::before { content: ''; position: fixed; top: 50%; left: 50%; width: 150vmax; height: 150vmax; background-image: radial-gradient(circle at center, #1E40AF 0%, rgba(30, 64, 175, 0) 40%); filter: blur(200px); animation: aurora-bg 45s linear infinite; z-index: -1; }
+            .card { @apply bg-black/20 backdrop-blur-lg rounded-xl shadow-2xl border border-white/10 flex flex-col; }
+            .header-button { @apply bg-white/5 hover:bg-white/10 text-gray-300 font-medium py-2 px-4 rounded-lg transition-all duration-200 text-sm flex items-center gap-2 backdrop-blur-sm border border-white/10 transform hover:scale-105 active:scale-100; }
+            .primary-button { @apply bg-teal-600 hover:bg-teal-500 text-white font-bold py-3 px-5 rounded-lg transition-all duration-200 flex items-center justify-center transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-teal-500/30; }
+            .input-field { @apply w-full bg-white/5 border border-white/10 rounded-lg p-3 focus:ring-2 focus:ring-teal-500 focus:outline-none transition-shadow duration-300 focus:shadow-md focus:shadow-teal-500/30; }
+            .select-field {
+                @apply w-full bg-white/5 border border-white/10 rounded-lg p-3 pr-10 appearance-none focus:ring-2 focus:ring-teal-500 focus:outline-none transition-shadow duration-300 focus:shadow-md focus:shadow-teal-500/30;
+                background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+                background-position: right 0.5rem center;
+                background-repeat: no-repeat;
+                background-size: 1.5em 1.5em;
+            }
+            .label { @apply block text-sm font-medium text-gray-300 mb-2; }
+            .session-item { @apply block bg-white/5 p-4 rounded-lg text-sm text-left hover:bg-white/10 cursor-pointer transition-all duration-200 border border-white/10 transform hover:scale-[1.03] hover:shadow-md hover:shadow-teal-500/10; }
+            .coming-soon-message { @apply text-center text-yellow-400 bg-yellow-900/30 p-3 rounded-lg text-sm mt-4; }
+        }
+        /* Modern Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background-color: #4A5568; border-radius: 20px; border: 2px solid transparent; background-clip: content-box; }
+        ::-webkit-scrollbar-thumb:hover { background-color: #718096; }
+
+        /* Themed Autofill for Webkit browsers */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        select:-webkit-autofill,
+        select:-webkit-autofill:hover,
+        select:-webkit-autofill:focus {
+            border: 1px solid rgb(55 65 81 / 0.1);
+            -webkit-text-fill-color: #E5E7EB !important; /* Text color */
+            -webkit-box-shadow: 0 0 0px 1000px #1a202c inset !important; /* A dark color from the theme */
+            box-shadow: 0 0 0px 1000px #1a202c inset !important;
+            transition: background-color 5000s ease-in-out 0s;
+            color: #E5E7EB !important;
+        }
+        option {
+            background-color: #1a202c;
+        }
+    </style>
+</head>
+<body class="aurora-background flex flex-col h-screen">
+
+    <header class="bg-black/20 backdrop-blur-sm border-b border-white/10 z-10 flex-shrink-0">
+        <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <span class="text-xl font-bold tracking-wider">TerraFormancer</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button id="tutorial-button" class="header-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span>How to Use</span>
+                    </button>
+                    <a href="https://github.com/UnityNimit/TerraFormancer" target="_blank" rel="noopener noreferrer" class="header-button">Support 🩷</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow flex flex-col md:flex-row gap-8 p-8 overflow-hidden z-10" style="animation: fade-slide-in 0.5s ease-out forwards;">
+        <!-- Left Panel: Configuration -->
+        <div class="card w-full md:w-1/2 h-full">
+            <div class="p-8 overflow-y-auto">
+                <div class="text-center mb-8">
+                    <span class="text-4xl">🛠️</span>
+                    <h1 class="text-3xl font-bold tracking-wider mt-2">TerraFormancer</h1>
+                    <p class="text-gray-400 mt-2">Configure your environment to begin.</p>
+                </div>
+                
+                <form id="config-form" class="space-y-6">
+                    <!-- LLM Provider Section -->
+                    <div>
+                        <label for="llm-provider" class="label">LLM Provider</label>
+                        <select id="llm-provider" class="select-field">
+                            <option value="google">Google Gemini</option>
+                            <option value="openai" disabled>OpenAI GPT-4 (Coming Soon)</option>
+                        </select>
+                    </div>
+                    <div id="google-fields">
+                        <label for="google-api-key" class="label">Google API Key</label>
+                        <input type="password" id="google-api-key" class="input-field" placeholder="sk-...">
+                    </div>
+
+                    <!-- Spacer -->
+                    <hr class="border-white/10 !my-8"/>
+
+                    <!-- Cloud Provider Section -->
+                    <div>
+                        <label for="cloud-provider" class="label">Cloud Provider</label>
+                        <select id="cloud-provider" class="select-field">
+                            <option value="aws">Amazon Web Services (AWS)</option>
+                            <option value="azure" disabled>Microsoft Azure (Coming Soon)</option>
+                            <option value="gcp" disabled>Google Cloud (Coming Soon)</option>
+                        </select>
+                    </div>
+
+                    <div id="aws-fields" class="space-y-6">
+                        <div>
+                            <label for="aws-access-key-id" class="label">AWS Access Key ID</label>
+                            <input type="text" id="aws-access-key-id" class="input-field" placeholder="AKIA...">
+                        </div>
+                        <div>
+                            <label for="aws-secret-access-key" class="label">AWS Secret Access Key</label>
+                            <input type="password" id="aws-secret-access-key" class="input-field" placeholder="Super-secret key">
+                        </div>
+                        <div>
+                            <label for="aws-default-region" class="label">AWS Default Region</label>
+                            <input type="text" id="aws-default-region" class="input-field" placeholder="us-east-1">
+                        </div>
+                    </div>
+
+                    <div id="coming-soon-container" class="hidden">
+                        <p class="coming-soon-message">Support for this provider is coming soon!</p>
+                    </div>
+
+                    <button type="submit" id="save-config-button" class="primary-button w-full !mt-8">
+                        <span id="save-btn-text">Save Configuration</span>
+                        <div id="save-spinner" class="hidden h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    </button>
+                    <p id="error-message" class="text-red-400 text-sm text-center mt-2"></p>
+                    <p id="success-message" class="text-green-400 text-sm text-center mt-2"></p>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right Panel: Sessions -->
+        <div class="card w-full md:w-1/2 h-full">
+            <div class="p-8 overflow-y-auto">
+                <h2 class="text-2xl font-bold mb-6 text-center">Your Conversations</h2>
+                <div class="space-y-4">
+                    <a href="/index.html" class="primary-button w-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                        Start New Conversation
+                    </a>
+                    <hr class="border-white/10 my-6"/>
+                    <div id="sessions-list" class="space-y-3 pr-2">
+                        <!-- Session items will be injected here -->
+                        <p id="sessions-placeholder" class="text-gray-500 text-center text-sm py-4">No past conversations found.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <div id="tutorial-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-md z-50 items-center justify-center p-4">
+        <div id="tutorial-panel" class="bg-gray-900/80 border border-white/10 rounded-xl shadow-2xl max-w-2xl w-full p-8 relative transform transition-all duration-300">
+            <button id="close-tutorial-button" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors text-2xl font-bold">×</button>
+            <h2 class="text-2xl font-bold mb-6 text-center">How To Get Started</h2>
+            <div class="space-y-6 text-gray-300">
+                <div class="flex items-start gap-4">
+                    <div class="text-3xl">1.</div>
+                    <div>
+                        <h3 class="font-semibold text-white">Select Providers</h3>
+                        <p class="text-sm">Choose your desired LLM (Large Language Model) and Cloud provider from the dropdown menus. Currently, Google Gemini and AWS are supported.</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="text-3xl">2.</div>
+                    <div>
+                        <h3 class="font-semibold text-white">Enter Credentials</h3>
+                        <p class="text-sm">Enter the necessary API keys and secrets for your selected providers. These are stored securely and are required to interact with the services.</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-4">
+                    <div class="text-3xl">3.</div>
+                    <div>
+                        <h3 class="font-semibold text-white">Save & Start</h3>
+                        <p class="text-sm">Click "Save Configuration". Once saved, you can start a new conversation or load a previous one to begin creating and managing your infrastructure!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- FORM ELEMENTS ---
+            const configForm = document.getElementById('config-form');
+            const saveButton = document.getElementById('save-config-button');
+            const saveBtnText = document.getElementById('save-btn-text');
+            const saveSpinner = document.getElementById('save-spinner');
+            const errorMessage = document.getElementById('error-message');
+            const successMessage = document.getElementById('success-message');
+
+            // --- INPUTS AND SELECTS ---
+            const cloudProviderSelect = document.getElementById('cloud-provider');
+            const llmProviderSelect = document.getElementById('llm-provider');
+            
+            const awsFields = document.getElementById('aws-fields');
+            const comingSoonContainer = document.getElementById('coming-soon-container');
+
+            const googleKeyInput = document.getElementById('google-api-key');
+            const awsAccessKeyInput = document.getElementById('aws-access-key-id');
+            const awsSecretKeyInput = document.getElementById('aws-secret-access-key');
+            const awsRegionInput = document.getElementById('aws-default-region');
+
+            const sessionsList = document.getElementById('sessions-list');
+            const sessionsPlaceholder = document.getElementById('sessions-placeholder');
+
+            // --- TUTORIAL MODAL ELEMENTS ---
+            const tutorialButton = document.getElementById('tutorial-button');
+            const tutorialModal = document.getElementById('tutorial-modal');
+            const closeTutorialButton = document.getElementById('close-tutorial-button');
+            const tutorialPanel = document.getElementById('tutorial-panel');
+
+
+            // --- UI LOGIC HANDLER ---
+            function handleProviderChange() {
+                const selectedProvider = cloudProviderSelect.value;
+                if (selectedProvider === 'aws') {
+                    awsFields.style.display = 'block';
+                    comingSoonContainer.classList.add('hidden');
+                    saveButton.disabled = false;
+                } else {
+                    awsFields.style.display = 'none';
+                    comingSoonContainer.classList.remove('hidden');
+                    saveButton.disabled = true; // Disable saving for providers that aren't ready
+                }
+            }
+            
+            // --- TUTORIAL MODAL ---
+            function setupTutorial() { 
+                const openModal = () => {
+                    tutorialModal.classList.add('flex');
+                    tutorialModal.classList.remove('hidden');
+                    tutorialModal.style.animation = 'fade-in 0.3s ease';
+                    tutorialPanel.style.animation = 'fade-in-scale-up 0.3s ease';
+                };
+                const closeModal = () => {
+                    tutorialPanel.style.animation='fade-in-scale-up 0.3s ease reverse';
+                    setTimeout(() => {
+                        tutorialModal.classList.add('hidden');
+                        tutorialModal.classList.remove('flex');
+                    }, 300);
+                };
+                tutorialButton.addEventListener('click', openModal);
+                closeTutorialButton.addEventListener('click', closeModal);
+                tutorialModal.addEventListener('click', e => { if (e.target === tutorialModal) closeModal(); });
+                document.addEventListener('keydown', e => { if (e.key ==='Escape' && !tutorialModal.classList.contains('hidden')) closeModal(); });
+            }
+
+            // --- FETCH AND DISPLAY CURRENT CONFIG ---
+            async function loadInitialConfig() {
+                try {
+                    const response = await fetch('/api/get_config');
+                    const config = await response.json();
+                    if (response.ok) {
+                        if (config.aws_default_region) {
+                            awsRegionInput.value = config.aws_default_region;
+                        }
+                        if (config.google_api_key_set) {
+                            googleKeyInput.placeholder = "Already set. Enter new key to change.";
+                        }
+                        if (config.aws_access_key_id_set) {
+                            awsAccessKeyInput.placeholder = "Already set. Enter new key to change.";
+                        }
+                        if (config.aws_secret_access_key_set) {
+                            awsSecretKeyInput.placeholder = "Already set. Enter new key to change.";
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch config', error);
+                }
+            }
+
+            // --- FETCH AND DISPLAY SESSIONS ---
+            async function loadSessions() {
+                try {
+                    const response = await fetch('/api/sessions');
+                    const sessions = await response.json();
+                    if (sessions.length > 0) {
+                        sessionsPlaceholder.style.display = 'none';
+                        sessionsList.innerHTML = ''; // Clear list
+                        sessions.forEach(session => {
+                            const sessionElement = document.createElement('a');
+                            sessionElement.href = `/index.html?session_id=${session.id}`;
+                            sessionElement.className = 'session-item';
+                            sessionElement.innerHTML = `
+                                <span class="font-semibold block truncate">${session.title}</span>
+                                <span class="text-xs text-gray-400">${new Date(session.last_modified * 1000).toLocaleString()}</span>
+                            `;
+                            sessionsList.appendChild(sessionElement);
+                        });
+                    } else {
+                        sessionsPlaceholder.style.display = 'block';
+                    }
+                } catch (error) {
+                    sessionsPlaceholder.textContent = 'Could not load sessions.';
+                    console.error('Failed to fetch sessions', error);
+                }
+            }
+            
+            // --- HANDLE FORM SUBMISSION ---
+            configForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                errorMessage.textContent = '';
+                successMessage.textContent = '';
+                saveBtnText.classList.add('hidden');
+                saveSpinner.classList.remove('hidden');
+                saveButton.disabled = true;
+
+                const configData = {
+                    google_api_key: googleKeyInput.value,
+                    aws_access_key_id: awsAccessKeyInput.value,
+                    aws_secret_access_key: awsSecretKeyInput.value,
+                    aws_default_region: awsRegionInput.value
+                };
+
+                try {
+                    const response = await fetch('/api/save_config', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(configData)
+                    });
+
+                    const result = await response.json();
+                    if (!response.ok) {
+                        throw new Error(result.detail || 'Failed to save configuration');
+                    }
+
+                    successMessage.textContent = 'Configuration saved successfully!';
+                    // Clear password fields after successful save
+                    googleKeyInput.value = '';
+                    awsAccessKeyInput.value = '';
+                    awsSecretKeyInput.value = '';
+                    loadInitialConfig(); // Refresh placeholders
+
+                } catch (error) {
+                    errorMessage.textContent = error.message;
+                } finally {
+                    saveBtnText.classList.remove('hidden');
+                    saveSpinner.classList.add('hidden');
+                    saveButton.disabled = false;
+                    handleProviderChange(); // Re-check if save button should be disabled
+                }
+            });
+
+            // --- INITIALIZATION ---
+            cloudProviderSelect.addEventListener('change', handleProviderChange);
+            handleProviderChange(); // Initial check
+            loadInitialConfig();
+            loadSessions();
+            setupTutorial();
+        });
+    </script>
+</body>
+</html>

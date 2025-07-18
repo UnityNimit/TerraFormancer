@@ -1,0 +1,12 @@
+# backend/requirements.txt
+fastapi[all]
+uvicorn[standard]
+python-dotenv
+langgraph
+langchain-core
+langchain-google-genai
+google-generativeai
+speechrecognition
+diagrams
+python-hcl2
+boto3

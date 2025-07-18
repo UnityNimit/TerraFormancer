@@ -9,8 +9,10 @@ __pycache__/
 
 # --- Generated Files ---
 backend/generated_files/
+backend/sessions
 
 # --- IDE/OS Specific ---
 .vscode/
 .idea/
 .DS_Store
+

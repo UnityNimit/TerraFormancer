@@ -4,24 +4,26 @@ import json
 import io
 import logging
 from typing import TypedDict, List
+from datetime import datetime, timedelta
 
 from dotenv import load_dotenv
 import hcl2
 from langgraph.graph import StateGraph, END
 from langchain_core.messages import BaseMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
+import boto3
 
+# Load environment variables
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+# Define the state for our graph
 class GraphState(TypedDict):
     work_dir: str
     initial_request: str
     conversation_history: List[BaseMessage]
-    
-    intent: str               
-    chat_response: str        
-    
+    intent: str
+    chat_response: str
     iac_code: str
     iac_diagram_path: str
     plan_output: str
@@ -29,35 +31,144 @@ class GraphState(TypedDict):
     clarification_questions: List[str]
     error_message: str
 
+# Initialize the LLM
 try:
     llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.1)
 except Exception as e:
     logging.error(f"FATAL: Error initializing LLM. Please check your GOOGLE_API_KEY. Details: {e}")
     raise
 
+# --- TOOL DEFINITIONS ---
+
+def aws_sdk_tool(resource_id: str, metric: str, namespace: str, dimensions: list) -> dict:
+    """
+    A tool to fetch CloudWatch metrics for a given AWS resource.
+    Returns a dictionary with the data or an error message.
+    """
+    logging.info(f"Executing aws_sdk_tool for resource:'{resource_id}' metric:'{metric}'")
+    try:
+        # Ensure your environment has AWS credentials configured (e.g., via ~/.aws/credentials)
+        client = boto3.client('cloudwatch')
+        response = client.get_metric_statistics(
+            Namespace=namespace,
+            MetricName=metric,
+            Dimensions=dimensions,
+            StartTime=datetime.utcnow() - timedelta(hours=3),  # Check the last 3 hours
+            EndTime=datetime.utcnow(),
+            Period=300,  # 5-minute intervals
+            Statistics=['Average', 'Maximum'],
+        )
+        # Return a clean summary of datapoints, sorted by time
+        datapoints = sorted(response.get('Datapoints', []), key=lambda x: x['Timestamp'])
+        return {"status": "success", "data": datapoints}
+    except Exception as e:
+        logging.error(f"boto3 tool error: {e}")
+        # Return a structured error that the LLM can understand
+        return {"status": "error", "message": f"An error occurred while fetching metrics: {str(e)}"}
+
+# --- AGENT NODE DEFINITIONS ---
+
 def intent_router_node(state: GraphState):
     """
     Classifies the user's intent to decide which path the graph should take.
-    This is the new entry point of our logic.
+    This is the new entry point of our logic, now with three categories.
     """
     logging.info("Executing intent_router_node...")
     user_message = state['conversation_history'][-1].content
-    
+
     prompt = f"""
-    You are a master router for a DevOps AI assistant. Your job is to classify the user's latest message into one of two categories based on their intent.
-    
-    1.  `CODE_MODIFICATION`: The user wants to create, add, remove, change, update, or provision infrastructure. This includes requests for new resources like S3 buckets, EC2 instances, VPCs, etc.
-    2.  `GENERAL_CHAT`: The user is asking a question, seeking an opinion, asking for an explanation, or having a general conversation. Examples: "What is a VPC?", "What's the best instance type for a web server?", "Thanks!", "Explain the diagram."
+    You are a master router for a DevOps AI assistant. Classify the user's latest message into one of three categories:
+
+    1.  `CODE_MODIFICATION`: The user wants to create, add, remove, change, or deploy infrastructure.
+        (Examples: "Create an S3 bucket", "Add an EC2 instance", "deploy my changes")
+    2.  `DEBUGGING_INQUIRY`: The user is asking a question about the status, health, or performance of a *specific, named* cloud resource.
+        (Examples: "Why is my instance i-012345abcdef slow?", "What's the status of the main database?", "Is the web server getting any traffic?")
+    3.  `GENERAL_CHAT`: The user is asking a general question, seeking an explanation, or having a conversation not tied to a specific, live resource.
+        (Examples: "What is a VPC?", "Thanks!", "Explain the diagram.")
 
     Analyze the following user message:
     "{user_message}"
 
-    Return ONLY the category name (`CODE_MODIFICATION` or `GENERAL_CHAT`). Do not add any other text.
+    Return ONLY the category name (`CODE_MODIFICATION`, `DEBUGGING_INQUIRY`, or `GENERAL_CHAT`).
     """
     response = llm.invoke(prompt)
     intent = response.content.strip()
     logging.info(f"User intent classified as: {intent}")
     return {"intent": intent}
+
+
+# In agent_logic.py, replace the old debugging_agent with this one.
+
+def debugging_agent(state: GraphState):
+    """
+    Handles debugging inquiries by using tools to fetch live data and analyzing it.
+    This version has improved NLU with conversation history.
+    """
+    logging.info("Executing debugging_agent...")
+    
+    # --- IMPROVEMENT 1: Use the whole conversation history for context ---
+    conversation_for_prompt = "\n".join([f"{msg.type}: {msg.content}" for msg in state['conversation_history']])
+
+    # --- IMPROVEMENT 2: A much more robust NLU prompt ---
+    nlu_prompt = f"""
+    You are an expert at extracting key information from a user's request for monitoring.
+    Your goal is to fill a JSON object based on the **entire conversation history**.
+
+    Analyze the conversation below. Identify the 'resource_id' (e.g., an instance ID) and infer the appropriate CloudWatch 'metric', 'namespace', and 'dimension_key'.
+    - If the user mentions slowness, high load, or performance, the metric is 'CPUUtilization'. The namespace for EC2 is 'AWS/EC2' and the dimension key is 'InstanceId'.
+    - If the user provides just an ID in their last message, use the context from the previous messages to fill in the other details.
+    - If you cannot determine a value for a key, use `null`.
+
+    Conversation History:
+    ---
+    {conversation_for_prompt}
+    ---
+
+    Return a clean, raw JSON object with the keys: "resource_id", "metric", "namespace", "dimension_key". Do NOT use markdown fences like ```json.
+    """
+    nlu_response = llm.invoke(nlu_prompt)
+    
+    # Add logging to see exactly what the LLM returned
+    logging.info(f"NLU Raw Response: {nlu_response.content}")
+
+    try:
+        # --- IMPROVEMENT 3: Clean the LLM response before parsing ---
+        cleaned_response = nlu_response.content.strip().replace("```json", "").replace("```", "").strip()
+        entities = json.loads(cleaned_response)
+
+        resource_id = entities.get('resource_id')
+        metric = entities.get('metric')
+        namespace = entities.get('namespace')
+        dimension_key = entities.get('dimension_key')
+
+        # Check for missing essential information
+        if not all([resource_id, metric, namespace, dimension_key]):
+             raise ValueError("Essential information for monitoring is missing.")
+
+        dimensions = [{'Name': dimension_key, 'Value': resource_id}]
+
+    except (json.JSONDecodeError, KeyError, ValueError) as e:
+        logging.error(f"Failed to parse entities or essential info missing: {e}")
+        return {"chat_response": "I'm sorry, I still need more information to proceed. Could you please specify the full resource ID and what you'd like to check (e.g., 'check CPU for i-012345abcdef')?"}
+
+    # --- Step 2 & 3 (Tool Use and Reasoning) remain the same ---
+    tool_data = aws_sdk_tool(resource_id, metric, namespace, dimensions)
+
+    reasoning_prompt = f"""
+    You are a Senior DevOps Engineer. You are helping a user debug a problem with their cloud infrastructure.
+    - User's Question: "{state['conversation_history'][-1].content}"
+    - You have just fetched the following monitoring data from AWS CloudWatch:
+      {json.dumps(tool_data, indent=2, default=str)}
+
+    Analyze this data and provide a helpful, clear, and concise response.
+    - If the tool status is 'error', explain the error to the user and ask them to check if the resource ID is correct and if the application has the right permissions.
+    - If the data array is empty, state that no metrics were found for that resource in the last 3 hours and ask them to verify the resource ID and region.
+    - If there is data, analyze it. Look for trends, especially high average or maximum values (e.g., CPUUtilization > 80%).
+    - Provide a summary of your findings and suggest a concrete next step (e.g., "The CPU has been consistently high. You may want to consider upgrading the instance type.").
+    """
+    final_response = llm.invoke(reasoning_prompt)
+    return {"chat_response": final_response.content}
+
 
 def conversational_agent_node(state: GraphState):
     """
@@ -77,12 +188,6 @@ def conversational_agent_node(state: GraphState):
     """
     response = llm.invoke(prompt)
     return {"chat_response": response.content}
-
-
-def architectural_goal_node(state: GraphState):
-    """(This function is kept for reference but is no longer part of the main graph flow)"""
-    return {"initial_request": state["conversation_history"][-1].content, "clarification_questions": []}
-
 
 
 def iac_generation_agent(state: GraphState):
@@ -122,7 +227,7 @@ def iac_generation_agent(state: GraphState):
         {conversation_for_prompt}
         Write the Terraform code now.
         """
-    
+
     response = llm.invoke(prompt)
     hcl_code = response.content.strip().replace("```hcl", "").replace("```", "").strip()
 
@@ -139,17 +244,17 @@ def iac_generation_agent(state: GraphState):
         error_msg = f"Error: LLM returned invalid HCL (missing provider block).\n---\n{hcl_code}"
         logging.error(error_msg)
         return {"iac_code": "", "error_message": error_msg}
-    
+
     iac_dir = state["work_dir"]
     with open(os.path.join(iac_dir, "main.tf"), "w") as f: f.write(hcl_code)
-    
+
     return {"iac_code": f"{hcl_code}", "error_message": ""}
 
 
 def clarification_agent(state: GraphState):
     logging.info("Executing clarification_agent: Analyzing request for details...")
     conversation_for_prompt = "\n".join([f"{msg.type}: {msg.content}" for msg in state['conversation_history']])
-    
+
     prompt = f"""
     You are a meticulous Cloud Architecture requirement analyst. Your goal is to gather key details before any code is written.
     Analyze the user's last message in the context of the entire conversation:
@@ -168,16 +273,18 @@ def clarification_agent(state: GraphState):
     User: "Create a t2.micro EC2 instance named 'api-server'."
     Your Output: []
     """
-    
+
     response = llm.invoke(prompt)
     try:
-        clarification_questions = json.loads(response.content)
+        cleaned_response = response.content.strip().replace("```json", "").replace("```", "").strip()
+        clarification_questions = json.loads(cleaned_response)
         logging.info(f"Clarification questions found: {clarification_questions}")
         return {"clarification_questions": clarification_questions}
     except json.JSONDecodeError:
         logging.error(f"Failed to decode JSON from clarification agent. Response: {response.content}")
         return {"clarification_questions": []}
 
+# --- NON-AGENT TOOL AND ROUTING FUNCTIONS ---
 
 def visualization_tool(state: GraphState):
     logging.info("Executing visualization_tool...")
@@ -210,68 +317,80 @@ def execution_tool(state: GraphState):
     return {"apply_output": apply_process.stdout + "\n" + apply_process.stderr}
 
 
-
 def route_by_intent(state: GraphState):
-    """This function decides the first major branch of the graph."""
+    """This function decides the first major branch of the graph based on intent."""
     intent = state.get("intent")
     if intent == "CODE_MODIFICATION":
         logging.info("Routing to: Code Modification Pipeline")
         return "clarification_agent"
-    
+    if intent == "DEBUGGING_INQUIRY":
+        logging.info("Routing to: Debugging Agent")
+        return "debugging_agent"
     logging.info("Routing to: General Chat")
     return "conversational_agent"
+
 
 def route_after_clarification(state: GraphState):
     """This function decides if the code generation pipeline should proceed or stop for user input."""
     if state.get("error_message"):
         logging.warning("Error detected, ending graph execution.")
         return END
-
     if state.get("clarification_questions"):
         logging.info("Clarification questions exist. Ending graph to await user response.")
         return END
-    
     logging.info("No clarification needed. Proceeding to code generation.")
     return "generate_code"
 
+
+# --- GRAPH DEFINITION ---
 
 def create_graph() -> StateGraph:
     """
     Builds the state machine graph with intelligent routing.
     """
     workflow = StateGraph(GraphState)
-    
+
+    # Add all nodes to the graph
     workflow.add_node("intent_router", intent_router_node)
     workflow.add_node("conversational_agent", conversational_agent_node)
+    workflow.add_node("debugging_agent", debugging_agent)
     workflow.add_node("clarification_agent", clarification_agent)
     workflow.add_node("generate_code", iac_generation_agent)
     workflow.add_node("generate_diagram", visualization_tool)
 
+    # Set the entry point
     workflow.set_entry_point("intent_router")
-    
+
+    # Define the edges and conditional routes
     workflow.add_conditional_edges(
         "intent_router",
         route_by_intent,
         {
-            "clarification_agent": "clarification_agent",    
-            "conversational_agent": "conversational_agent" 
+            "clarification_agent": "clarification_agent",
+            "conversational_agent": "conversational_agent",
+            "debugging_agent": "debugging_agent"
         }
     )
-    
+
+    # Define terminal nodes for chat-like interactions
     workflow.add_edge("conversational_agent", END)
-    
+    workflow.add_edge("debugging_agent", END)
+
+    # Define the code generation pipeline
     workflow.add_conditional_edges(
         "clarification_agent",
         route_after_clarification,
         {
-            "generate_code": "generate_code", 
-            END: END                          
+            "generate_code": "generate_code",
+            END: END
         }
     )
-    
     workflow.add_edge("generate_code", "generate_diagram")
     workflow.add_edge("generate_diagram", END)
-    
+
+    # Compile the graph
     return workflow.compile()
 
+
+# Instantiate the graph
 app_graph = create_graph()
