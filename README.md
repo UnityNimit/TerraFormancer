@@ -114,7 +114,13 @@ pip install -r requirements.txt
 **3. Configure Environment Variables via the App**
 
 For this new version, you no longer need to manually create the `.env` file. You will configure the credentials through the application's web interface on the first run. The app will securely create and manage the `backend/.env` file for you.
-
+```
+#Sample env file
+GOOGLE_API_KEY="api-key"
+AWS_ACCESS_KEY_ID="access-key"
+AWS_SECRET_ACCESS_KEY="secret-access-key"
+AWS_DEFAULT_REGION="dn-north-6"
+```
 </details>
 
 ## 🖥️ Usage
